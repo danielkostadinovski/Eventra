@@ -1,0 +1,15 @@
+# Hide editor, tool configs, env files, junk, etc.
+.*
+!.gitignore
+
+# Composer dependencies
+vendor/
+composer.phar
+
+# Logs
+*.log
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
