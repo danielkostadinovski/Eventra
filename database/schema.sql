@@ -62,7 +62,7 @@ CREATE TABLE Bookings (
     StartTime TEXT NOT NULL CHECK (StartTime IS strftime('%H:%M', StartTime)),
     HoursBooked INTEGER NOT NULL CHECK (HoursBooked BETWEEN 1 AND 12),
     GuestCount INTEGER NOT NULL CHECK (GuestCount >= 1),
-    StaffCount INTEGER NOT NULL DEFAULT 0 CHECK (StaffCount >= 0),
+    StaffCount INTEGER NOT NULL DEFAULT 0 CHECK (StaffCount BETWEEN 0 AND 25),
     WantsFood INTEGER NOT NULL DEFAULT 0 CHECK (WantsFood IN (0, 1)),
     VenueHourlyRate INTEGER NOT NULL CHECK (VenueHourlyRate > 0),
     HourlyStaffRate INTEGER NOT NULL CHECK (HourlyStaffRate >= 0),
