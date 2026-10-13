@@ -88,3 +88,27 @@ CREATE TABLE BookingEquipment (
 ) STRICT;
 
 CREATE INDEX IX_BookingEquipment_Equipment ON BookingEquipment (EquipmentID);
+
+CREATE TABLE StaffAssignments (
+    AssignmentID INTEGER PRIMARY KEY,
+    BookingID INTEGER NOT NULL REFERENCES Bookings (BookingID) ON DELETE RESTRICT,
+    ServerID INTEGER NOT NULL REFERENCES Users (UserID) ON DELETE RESTRICT,
+    Status TEXT NOT NULL DEFAULT 'Pending' CHECK (Status IN ('Pending', 'Accepted', 'Declined')),
+    UNIQUE (BookingID, ServerID)
+) STRICT;
+
+CREATE INDEX IX_StaffAssignments_Server ON StaffAssignments (ServerID);
+
+CREATE TABLE Payments (
+    BookingID INTEGER NOT NULL PRIMARY KEY REFERENCES Bookings (BookingID) ON DELETE RESTRICT,
+    Status TEXT NOT NULL DEFAULT 'Unpaid' CHECK (Status IN ('Unpaid', 'Paid', 'Refunded')),
+    PaidAt TEXT CHECK (PaidAt IS NULL OR PaidAt IS datetime(PaidAt)),
+    CONSTRAINT CK_Payments_PaidAt CHECK ((Status = 'Unpaid') = (PaidAt IS NULL))
+) STRICT, WITHOUT ROWID;
+
+CREATE TABLE Reviews (
+    BookingID INTEGER NOT NULL PRIMARY KEY REFERENCES Bookings (BookingID) ON DELETE RESTRICT,
+    Rating INTEGER NOT NULL CHECK (Rating BETWEEN 1 AND 5),
+    Comment TEXT NOT NULL CHECK (length(trim(Comment)) > 0),
+    CreatedAt TEXT NOT NULL DEFAULT (datetime('now', 'localtime')) CHECK (CreatedAt IS datetime(CreatedAt))
+) STRICT, WITHOUT ROWID;
