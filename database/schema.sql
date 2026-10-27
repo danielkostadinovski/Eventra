@@ -112,3 +112,53 @@ CREATE TABLE Reviews (
     Comment TEXT NOT NULL CHECK (length(trim(Comment)) > 0),
     CreatedAt TEXT NOT NULL DEFAULT (datetime('now', 'localtime')) CHECK (CreatedAt IS datetime(CreatedAt))
 ) STRICT, WITHOUT ROWID;
+
+CREATE VIEW BookingSchedule AS
+SELECT
+    t.BookingID,
+    t.VenueID,
+    t.EventDate,
+    t.Status,
+    t.StartTime,
+    printf('%02d:%02d', t.EndMinute / 60, t.EndMinute % 60) AS EndTime,
+    t.StartMinute,
+    t.EndMinute
+FROM (
+    SELECT BookingID, VenueID, EventDate, Status, StartTime,
+        CAST(substr(StartTime, 1, 2) AS INTEGER) * 60 + CAST(substr(StartTime, 4, 2) AS INTEGER) AS StartMinute,
+        CAST(substr(StartTime, 1, 2) AS INTEGER) * 60 + CAST(substr(StartTime, 4, 2) AS INTEGER) + HoursBooked * 60 AS EndMinute
+    FROM Bookings
+) AS t;
+
+CREATE VIEW BookingPrices AS
+SELECT
+    b.BookingID,
+    b.VenueHourlyRate * b.HoursBooked AS VenueCost,
+    b.StaffCount * b.HourlyStaffRate * b.HoursBooked AS StaffCost,
+    b.WantsFood * b.GuestCount * b.FoodRatePerPerson AS FoodCost,
+    COALESCE(e.EquipmentCost, 0) AS EquipmentCost,
+    b.VenueHourlyRate * b.HoursBooked
+        + b.StaffCount * b.HourlyStaffRate * b.HoursBooked
+        + b.WantsFood * b.GuestCount * b.FoodRatePerPerson
+        + COALESCE(e.EquipmentCost, 0) AS TotalPrice
+FROM Bookings AS b
+LEFT JOIN (
+    SELECT BookingID, SUM(Quantity * UnitPrice) AS EquipmentCost
+    FROM BookingEquipment
+    GROUP BY BookingID
+) AS e ON e.BookingID = b.BookingID;
+
+CREATE VIEW ServerEarnings AS
+SELECT
+    sa.AssignmentID,
+    sa.ServerID,
+    b.BookingID,
+    b.VenueID,
+    b.EventDate,
+    b.Status AS BookingStatus,
+    b.HoursBooked AS HoursWorked,
+    b.HourlyStaffRate,
+    b.HoursBooked * b.HourlyStaffRate AS Earnings
+FROM StaffAssignments AS sa
+JOIN Bookings AS b ON b.BookingID = sa.BookingID
+WHERE sa.Status = 'Accepted';
