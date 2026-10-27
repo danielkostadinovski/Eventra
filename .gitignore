@@ -13,3 +13,5 @@ composer.phar
 *.sqlite
 *.sqlite3
 *.db
+*.db-wal
+*.db-shm
