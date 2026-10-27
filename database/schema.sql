@@ -162,3 +162,72 @@ SELECT
 FROM StaffAssignments AS sa
 JOIN Bookings AS b ON b.BookingID = sa.BookingID
 WHERE sa.Status = 'Accepted';
+
+CREATE TRIGGER TRG_Users_BeforeUpdate
+BEFORE UPDATE ON Users
+BEGIN
+    SELECT RAISE(ABORT, 'A user''s role cannot be changed after the account is created')
+    WHERE NEW.Role IS NOT OLD.Role;
+
+    SELECT RAISE(ABORT, 'Administrator accounts cannot be deactivated')
+    WHERE NEW.IsActive = 0 AND OLD.IsActive = 1 AND OLD.Role = 'Admin';
+
+    SELECT RAISE(ABORT, 'Reassign this manager''s venues before deactivating the account')
+    WHERE NEW.IsActive = 0 AND OLD.IsActive = 1
+      AND EXISTS (SELECT 1 FROM Venues WHERE ManagerID = OLD.UserID AND IsActive = 1);
+END;
+
+CREATE TRIGGER TRG_Venues_BeforeInsert
+BEFORE INSERT ON Venues
+BEGIN
+    SELECT RAISE(ABORT, 'ManagerID must reference a user with the Manager role')
+    WHERE NOT EXISTS (SELECT 1 FROM Users WHERE UserID = NEW.ManagerID AND Role = 'Manager');
+
+    SELECT RAISE(ABORT, 'An active venue must be assigned to an active manager')
+    WHERE NEW.IsActive = 1
+      AND NOT EXISTS (SELECT 1 FROM Users WHERE UserID = NEW.ManagerID AND IsActive = 1);
+END;
+
+CREATE TRIGGER TRG_Venues_BeforeUpdate
+BEFORE UPDATE ON Venues
+BEGIN
+    SELECT RAISE(ABORT, 'ManagerID must reference a user with the Manager role')
+    WHERE NOT EXISTS (SELECT 1 FROM Users WHERE UserID = NEW.ManagerID AND Role = 'Manager');
+
+    SELECT RAISE(ABORT, 'An active venue must be assigned to an active manager')
+    WHERE NEW.IsActive = 1
+      AND NOT EXISTS (SELECT 1 FROM Users WHERE UserID = NEW.ManagerID AND IsActive = 1);
+
+    SELECT RAISE(ABORT, 'Resolve this venue''s open bookings before deactivating it')
+    WHERE NEW.IsActive = 0 AND OLD.IsActive = 1
+      AND EXISTS (SELECT 1 FROM Bookings
+                  WHERE VenueID = OLD.VenueID AND Status IN ('Pending', 'Approved', 'Confirmed'));
+
+    SELECT RAISE(ABORT, 'Capacity cannot be lowered below the guest count of an open booking')
+    WHERE NEW.MaxCapacity < OLD.MaxCapacity
+      AND EXISTS (SELECT 1 FROM Bookings
+                  WHERE VenueID = OLD.VenueID AND Status IN ('Pending', 'Approved', 'Confirmed')
+                    AND GuestCount > NEW.MaxCapacity);
+END;
+
+CREATE TRIGGER TRG_PricingSettings_BeforeDelete
+BEFORE DELETE ON PricingSettings
+BEGIN
+    SELECT RAISE(ABORT, 'The pricing settings row cannot be deleted; update it instead');
+END;
+
+CREATE TRIGGER TRG_BlackoutDates_BeforeInsert
+BEFORE INSERT ON BlackoutDates
+BEGIN
+    SELECT RAISE(ABORT, 'This venue already has a booking on that date')
+    WHERE EXISTS (SELECT 1 FROM Bookings
+                  WHERE VenueID = NEW.VenueID AND EventDate = NEW.BlackoutDate AND Status <> 'Cancelled');
+END;
+
+CREATE TRIGGER TRG_BlackoutDates_BeforeUpdate
+BEFORE UPDATE OF VenueID, BlackoutDate ON BlackoutDates
+BEGIN
+    SELECT RAISE(ABORT, 'This venue already has a booking on that date')
+    WHERE EXISTS (SELECT 1 FROM Bookings
+                  WHERE VenueID = NEW.VenueID AND EventDate = NEW.BlackoutDate AND Status <> 'Cancelled');
+END;
