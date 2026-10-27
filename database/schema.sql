@@ -296,3 +296,161 @@ WHEN NEW.Status = 'Confirmed' AND OLD.Status IS NOT 'Confirmed'
 BEGIN
     INSERT INTO Payments (BookingID) VALUES (NEW.BookingID);
 END;
+
+CREATE TRIGGER TRG_BookingEquipment_BeforeInsert
+BEFORE INSERT ON BookingEquipment
+BEGIN
+    SELECT RAISE(ABORT, 'Equipment can only be added while the booking is Pending')
+    WHERE (SELECT Status FROM Bookings WHERE BookingID = NEW.BookingID) IS NOT 'Pending';
+
+    SELECT RAISE(ABORT, 'This equipment item is no longer offered')
+    WHERE NOT EXISTS (SELECT 1 FROM Equipment WHERE EquipmentID = NEW.EquipmentID AND IsActive = 1);
+
+    SELECT RAISE(ABORT, 'Captured unit price should equal the current catalog price')
+    WHERE NEW.UnitPrice IS NOT (SELECT UnitPrice FROM Equipment WHERE EquipmentID = NEW.EquipmentID);
+END;
+
+CREATE TRIGGER TRG_BookingEquipment_BeforeUpdate
+BEFORE UPDATE ON BookingEquipment
+BEGIN
+    SELECT RAISE(ABORT, 'Booked equipment cannot be changed after submission');
+END;
+
+CREATE TRIGGER TRG_BookingEquipment_BeforeDelete
+BEFORE DELETE ON BookingEquipment
+BEGIN
+    SELECT RAISE(ABORT, 'Booked equipment cannot be removed after submission')
+    WHERE (SELECT Status FROM Bookings WHERE BookingID = OLD.BookingID)
+          IN ('Approved', 'Confirmed', 'Completed', 'Cancelled');
+END;
+
+CREATE TRIGGER TRG_StaffAssignments_BeforeInsert
+BEFORE INSERT ON StaffAssignments
+BEGIN
+    SELECT RAISE(ABORT, 'ServerID must reference an active user with the Server role')
+    WHERE NOT EXISTS (SELECT 1 FROM Users
+                      WHERE UserID = NEW.ServerID AND Role = 'Server' AND IsActive = 1);
+
+    SELECT RAISE(ABORT, 'Servers can only be assigned to Confirmed bookings')
+    WHERE (SELECT Status FROM Bookings WHERE BookingID = NEW.BookingID) IS NOT 'Confirmed';
+
+    SELECT RAISE(ABORT, 'This booking did not request staffing')
+    WHERE (SELECT StaffCount FROM Bookings WHERE BookingID = NEW.BookingID) = 0;
+
+    SELECT RAISE(ABORT, 'New assignments must start as Pending')
+    WHERE NEW.Status IS NOT 'Pending';
+
+    SELECT RAISE(ABORT, 'This booking already has as many servers as it requested')
+    WHERE (SELECT COUNT(*) FROM StaffAssignments
+           WHERE BookingID = NEW.BookingID AND Status <> 'Declined')
+          >= (SELECT StaffCount FROM Bookings WHERE BookingID = NEW.BookingID);
+
+    SELECT RAISE(ABORT, 'This server already has an assignment that overlaps this event')
+    WHERE EXISTS (SELECT 1
+                  FROM StaffAssignments AS sa
+                  JOIN BookingSchedule AS o ON o.BookingID = sa.BookingID
+                  JOIN BookingSchedule AS n ON n.BookingID = NEW.BookingID
+                  WHERE sa.ServerID = NEW.ServerID
+                    AND sa.BookingID <> NEW.BookingID
+                    AND sa.Status <> 'Declined'
+                    AND o.Status <> 'Cancelled'
+                    AND o.EventDate = n.EventDate
+                    AND o.StartMinute < n.EndMinute
+                    AND n.StartMinute < o.EndMinute);
+END;
+
+CREATE TRIGGER TRG_StaffAssignments_BeforeUpdate
+BEFORE UPDATE ON StaffAssignments
+BEGIN
+    SELECT RAISE(ABORT, 'An assignment''s booking and server cannot be changed')
+    WHERE NEW.AssignmentID IS NOT OLD.AssignmentID
+       OR NEW.BookingID IS NOT OLD.BookingID
+       OR NEW.ServerID IS NOT OLD.ServerID;
+
+    SELECT RAISE(ABORT, 'Assignments can only change while the booking is Confirmed')
+    WHERE NEW.Status IS NOT OLD.Status
+      AND (SELECT Status FROM Bookings WHERE BookingID = NEW.BookingID) IS NOT 'Confirmed';
+
+    SELECT RAISE(ABORT, 'This booking already has as many servers as it requested')
+    WHERE OLD.Status = 'Declined' AND NEW.Status <> 'Declined'
+      AND (SELECT COUNT(*) FROM StaffAssignments
+           WHERE BookingID = NEW.BookingID AND Status <> 'Declined')
+          >= (SELECT StaffCount FROM Bookings WHERE BookingID = NEW.BookingID);
+
+    SELECT RAISE(ABORT, 'This server already has an assignment that overlaps this event')
+    WHERE OLD.Status = 'Declined' AND NEW.Status <> 'Declined'
+      AND EXISTS (SELECT 1
+                  FROM StaffAssignments AS sa
+                  JOIN BookingSchedule AS o ON o.BookingID = sa.BookingID
+                  JOIN BookingSchedule AS n ON n.BookingID = NEW.BookingID
+                  WHERE sa.ServerID = NEW.ServerID
+                    AND sa.BookingID <> NEW.BookingID
+                    AND sa.Status <> 'Declined'
+                    AND o.Status <> 'Cancelled'
+                    AND o.EventDate = n.EventDate
+                    AND o.StartMinute < n.EndMinute
+                    AND n.StartMinute < o.EndMinute);
+END;
+
+CREATE TRIGGER TRG_StaffAssignments_BeforeDelete
+BEFORE DELETE ON StaffAssignments
+BEGIN
+    SELECT RAISE(ABORT, 'Only a Pending assignment on a Confirmed booking can be withdrawn')
+    WHERE OLD.Status IS NOT 'Pending'
+       OR (SELECT Status FROM Bookings WHERE BookingID = OLD.BookingID) IS NOT 'Confirmed';
+END;
+
+CREATE TRIGGER TRG_Payments_BeforeInsert
+BEFORE INSERT ON Payments
+BEGIN
+    SELECT RAISE(ABORT, 'A payment record can only be opened for a Confirmed booking')
+    WHERE (SELECT Status FROM Bookings WHERE BookingID = NEW.BookingID) IS NOT 'Confirmed';
+END;
+
+CREATE TRIGGER TRG_Payments_BeforeUpdate
+BEFORE UPDATE ON Payments
+BEGIN
+    SELECT RAISE(ABORT, 'A payment''s booking cannot be changed')
+    WHERE NEW.BookingID IS NOT OLD.BookingID;
+
+    SELECT RAISE(ABORT, 'A refunded payment cannot be changed')
+    WHERE OLD.Status = 'Refunded'
+      AND (NEW.Status IS NOT OLD.Status OR NEW.PaidAt IS NOT OLD.PaidAt);
+
+    SELECT RAISE(ABORT, 'A cancelled booking cannot be marked as Paid')
+    WHERE NEW.Status = 'Paid' AND OLD.Status IS NOT 'Paid'
+      AND (SELECT Status FROM Bookings WHERE BookingID = NEW.BookingID) = 'Cancelled';
+
+    SELECT RAISE(ABORT, 'Record a refund with the Refunded status, not Unpaid')
+    WHERE NEW.Status = 'Unpaid' AND OLD.Status = 'Paid'
+      AND (SELECT Status FROM Bookings WHERE BookingID = NEW.BookingID) = 'Cancelled';
+
+    SELECT RAISE(ABORT, 'Only a paid payment of a cancelled booking can be refunded')
+    WHERE NEW.Status = 'Refunded' AND OLD.Status IS NOT 'Refunded'
+      AND (OLD.Status IS NOT 'Paid'
+           OR (SELECT Status FROM Bookings WHERE BookingID = NEW.BookingID) IS NOT 'Cancelled');
+
+    SELECT RAISE(ABORT, 'A refund keeps the original payment time')
+    WHERE NEW.Status = 'Refunded' AND OLD.Status = 'Paid'
+      AND NEW.PaidAt IS NOT OLD.PaidAt;
+END;
+
+CREATE TRIGGER TRG_Payments_BeforeDelete
+BEFORE DELETE ON Payments
+BEGIN
+    SELECT RAISE(ABORT, 'Payment records cannot be deleted, they are kept as financial history');
+END;
+
+CREATE TRIGGER TRG_Reviews_BeforeInsert
+BEFORE INSERT ON Reviews
+BEGIN
+    SELECT RAISE(ABORT, 'Only Completed bookings can be reviewed')
+    WHERE (SELECT Status FROM Bookings WHERE BookingID = NEW.BookingID) IS NOT 'Completed';
+END;
+
+CREATE TRIGGER TRG_Reviews_BeforeUpdate
+BEFORE UPDATE ON Reviews
+BEGIN
+    SELECT RAISE(ABORT, 'A review''s booking cannot be changed')
+    WHERE NEW.BookingID IS NOT OLD.BookingID;
+END;
