@@ -231,3 +231,68 @@ BEGIN
     WHERE EXISTS (SELECT 1 FROM Bookings
                   WHERE VenueID = NEW.VenueID AND EventDate = NEW.BlackoutDate AND Status <> 'Cancelled');
 END;
+
+CREATE TRIGGER TRG_Bookings_BeforeInsert
+BEFORE INSERT ON Bookings
+BEGIN
+    SELECT RAISE(ABORT, 'New bookings must start in the Pending status')
+    WHERE NEW.Status IS NOT 'Pending';
+
+    SELECT RAISE(ABORT, 'ClientID must reference an active user with the Client role')
+    WHERE NOT EXISTS (SELECT 1 FROM Users
+                      WHERE UserID = NEW.ClientID AND Role = 'Client' AND IsActive = 1);
+
+    SELECT RAISE(ABORT, 'This venue is not available for booking')
+    WHERE NOT EXISTS (SELECT 1 FROM Venues WHERE VenueID = NEW.VenueID AND IsActive = 1);
+
+    SELECT RAISE(ABORT, 'Guest count exceeds the venue''s maximum capacity')
+    WHERE NEW.GuestCount > (SELECT MaxCapacity FROM Venues WHERE VenueID = NEW.VenueID);
+
+    SELECT RAISE(ABORT, 'The venue is blacked out on this date')
+    WHERE EXISTS (SELECT 1 FROM BlackoutDates
+                  WHERE VenueID = NEW.VenueID AND BlackoutDate = NEW.EventDate);
+
+    SELECT RAISE(ABORT, 'Captured rates must equal the rates in force at submission')
+    WHERE NEW.VenueHourlyRate IS NOT (SELECT HourlyRate FROM Venues WHERE VenueID = NEW.VenueID)
+       OR NEW.HourlyStaffRate IS NOT (SELECT HourlyStaffRate FROM PricingSettings WHERE SettingID = 1)
+       OR NEW.FoodRatePerPerson IS NOT (SELECT FoodRatePerPerson FROM PricingSettings WHERE SettingID = 1);
+END;
+
+CREATE TRIGGER TRG_Bookings_BeforeUpdate
+BEFORE UPDATE ON Bookings
+BEGIN
+    SELECT RAISE(ABORT, 'Booking details and captured rates cannot be changed after submission')
+    WHERE NEW.BookingID IS NOT OLD.BookingID
+       OR NEW.VenueID IS NOT OLD.VenueID
+       OR NEW.ClientID IS NOT OLD.ClientID
+       OR NEW.EventDate IS NOT OLD.EventDate
+       OR NEW.HoursBooked IS NOT OLD.HoursBooked
+       OR NEW.GuestCount IS NOT OLD.GuestCount
+       OR NEW.StaffCount IS NOT OLD.StaffCount
+       OR NEW.WantsFood IS NOT OLD.WantsFood
+       OR NEW.VenueHourlyRate IS NOT OLD.VenueHourlyRate
+       OR NEW.HourlyStaffRate IS NOT OLD.HourlyStaffRate
+       OR NEW.FoodRatePerPerson IS NOT OLD.FoodRatePerPerson
+       OR NEW.CreatedAt IS NOT OLD.CreatedAt;
+
+    SELECT RAISE(ABORT, 'The start time can only change before the booking is Confirmed')
+    WHERE NEW.StartTime IS NOT OLD.StartTime
+      AND OLD.Status NOT IN ('Pending', 'Approved');
+
+    SELECT RAISE(ABORT, 'Invalid booking status change')
+    WHERE NEW.Status IS NOT OLD.Status
+      AND NOT (   (OLD.Status = 'Pending'   AND NEW.Status IN ('Approved', 'Cancelled'))
+               OR (OLD.Status = 'Approved'  AND NEW.Status IN ('Confirmed', 'Cancelled'))
+               OR (OLD.Status = 'Confirmed' AND NEW.Status IN ('Completed', 'Cancelled')));
+
+    SELECT RAISE(ABORT, 'A booking can only be marked Completed on or after its event date')
+    WHERE NEW.Status = 'Completed' AND OLD.Status IS NOT 'Completed'
+      AND NEW.EventDate > date('now', 'localtime');
+END;
+
+CREATE TRIGGER TRG_Bookings_AfterConfirm
+AFTER UPDATE OF Status ON Bookings
+WHEN NEW.Status = 'Confirmed' AND OLD.Status IS NOT 'Confirmed'
+BEGIN
+    INSERT INTO Payments (BookingID) VALUES (NEW.BookingID);
+END;
