@@ -1,0 +1,99 @@
+:root {
+    --eventra-espresso: #3b2a20;
+    --eventra-brown: #6f5646;
+    --eventra-gold: #b8955a;
+    --eventra-gold-text: #8c6a32;
+    --eventra-sand: #dbd0c2;
+    --eventra-champagne: #f1e8df;
+    --eventra-ivory: #faf7f2;
+}
+
+body {
+    background-color: var(--eventra-ivory);
+    color: var(--eventra-espresso);
+    font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, .navbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-weight: 500;
+}
+
+a {
+    color: var(--eventra-espresso);
+}
+
+a:hover {
+    color: var(--eventra-gold-text);
+}
+
+.text-muted {
+    color: var(--eventra-brown) !important;
+}
+
+.navbar-eventra {
+    background-color: var(--eventra-champagne);
+    border-bottom: 1px solid var(--eventra-sand);
+}
+
+.navbar-eventra .navbar-brand {
+    color: var(--eventra-espresso);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+}
+
+.navbar-eventra .nav-link,
+.navbar-eventra .navbar-text,
+.navbar-eventra .btn {
+    color: var(--eventra-espresso);
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.btn-eventra {
+    background-color: var(--eventra-espresso);
+    border-color: var(--eventra-espresso);
+    color: var(--eventra-ivory);
+}
+
+.btn-eventra:hover,
+.btn-eventra:focus {
+    background-color: var(--eventra-gold);
+    border-color: var(--eventra-gold);
+    color: var(--eventra-espresso);
+}
+
+.btn-outline-eventra {
+    border-color: var(--eventra-espresso);
+    color: var(--eventra-espresso);
+}
+
+.btn-outline-eventra:hover,
+.btn-outline-eventra:focus {
+    background-color: var(--eventra-espresso);
+    color: var(--eventra-ivory);
+}
+
+.form-control:focus {
+    border-color: var(--eventra-gold);
+    box-shadow: 0 0 0 0.2rem rgba(184, 149, 90, 0.25);
+}
+
+.eyebrow {
+    color: var(--eventra-gold-text);
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+.hero {
+    background-color: var(--eventra-champagne);
+    border: 1px solid var(--eventra-sand);
+    border-radius: 1rem;
+}
+
+.auth-card {
+    max-width: 460px;
+    border-color: var(--eventra-sand);
+}
