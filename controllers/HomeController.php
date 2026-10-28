@@ -4,6 +4,12 @@ class HomeController
 {
     public static function index(): void
     {
-        view('home', ['title' => 'Eventra – Book an event venue']);
+        $user = currentUser();
+
+        if ($user !== null) {
+            redirect(dashboardPage($user));
+        }
+
+        view('home', ['title' => 'Eventra – Book an event venue', 'mainClass' => 'd-flex']);
     }
 }
