@@ -1,86 +1,35 @@
-:root {
-    --eventra-dark: #1a1a1a;
-    --eventra-gold: #9c7a3c;
-    --eventra-champagne: #d6d6d6;
-    --eventra-ivory: #faf9f7;
-}
-
 body {
-    background-color: var(--eventra-ivory);
-    color: var(--eventra-dark);
-    font-family: Helvetica, Arial, sans-serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-}
-
-h1, h2, h3 {
-    font-weight: 700;
-}
-
-a {
-    color: var(--eventra-dark);
-}
-
-.navbar-eventra {
-    background-color: var(--eventra-champagne);
-}
-
-.navbar-eventra .navbar-brand {
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-}
-
-.navbar-eventra .nav-link,
-.navbar-eventra .navbar-text,
-.navbar-eventra .btn {
-    font-size: 0.8rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.btn-eventra {
-    background-color: var(--eventra-dark);
-    color: var(--eventra-ivory);
-}
-
-.btn-eventra:hover {
-    background-color: var(--eventra-gold);
-    color: var(--eventra-ivory);
-}
-
-.btn-outline-eventra {
-    border-color: var(--eventra-dark);
-    color: var(--eventra-dark);
-}
-
-.btn-outline-eventra:hover {
-    background-color: var(--eventra-dark);
-    color: var(--eventra-ivory);
-}
-
-.eyebrow {
-    color: var(--eventra-gold);
-    font-size: 0.75rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-}
-
-.hero {
-    background-color: rgba(241, 232, 223, 0.92);
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-}
-
-.auth-card {
-    max-width: 460px;
+    font-family: Helvetica, Arial, sans-serif;
 }
 
 main {
     flex: 1;
 }
 
+footer {
+    font-size: 0.75rem;
+}
+
+.btn-eventra,
+.btn-eventra:hover {
+    background-color: transparent;
+    border-color: var(--bs-body-color);
+    color: var(--bs-body-color);
+}
+
+.auth-card {
+    max-width: 460px;
+}
+
 .split-photo {
     background: url('../images/wedding.jpg') center / cover;
     min-height: 300px;
+}
+
+.navbar-brand,
+.navbar-brand:hover {
+    color: var(--bs-body-color);
 }

@@ -1,6 +1,6 @@
 <div class="card auth-card mx-auto">
     <div class="card-body p-4">
-        <h1 class="h3 mb-4">Log in</h1>
+        <h1 class="h3 mb-4 text-center">Log in</h1>
 
         <?php if ($error): ?>
             <div class="alert alert-danger"><?= e($error) ?></div>

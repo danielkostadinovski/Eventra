@@ -8,19 +8,19 @@
     <link href="css/style.css" rel="stylesheet">
 </head>
 <body>
-<nav class="navbar navbar-eventra">
+<nav class="navbar border-bottom">
     <div class="container">
         <a class="navbar-brand" href="index.php">Eventra</a>
         <div class="d-flex align-items-center gap-3">
             <?php if ($navUser = currentUser()): ?>
-                <span class="navbar-text"><?= e($navUser['FirstName']) ?>, <?= e(roleName($navUser['Role'])) ?></span>
+                <span><?= e($navUser['FirstName']) ?>, <?= e(roleName($navUser['Role'])) ?></span>
                 <form method="post" action="index.php?page=logout">
                     <?= csrfField() ?>
-                    <button class="btn btn-outline-eventra btn-sm">Log out</button>
+                    <button class="btn btn-eventra">Log out</button>
                 </form>
             <?php else: ?>
-                <a class="nav-link" href="index.php?page=login">Log in</a>
-                <a class="btn btn-outline-eventra btn-sm" href="index.php?page=register">Register</a>
+                <a class="btn btn-eventra" href="index.php?page=login">Log in</a>
+                <a class="btn btn-eventra" href="index.php?page=register">Register</a>
             <?php endif; ?>
         </div>
     </div>
