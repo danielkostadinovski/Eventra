@@ -13,6 +13,9 @@
         <a class="navbar-brand" href="index.php">Eventra</a>
         <div class="d-flex align-items-center gap-3">
             <?php if ($navUser = currentUser()): ?>
+                <?php if ($navUser['Role'] === 'Client'): ?>                                 
+                    <a class="btn btn-eventra" href="index.php?page=venues">Venues</a>     
+                <?php endif; ?>                                                            
                 <span><?= e($navUser['FirstName']) ?>, <?= e(roleName($navUser['Role'])) ?></span>
                 <form method="post" action="index.php?page=logout">
                     <?= csrfField() ?>

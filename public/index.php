@@ -8,9 +8,11 @@ session_start([
 require __DIR__ . '/../config/db.php';
 require __DIR__ . '/../config/helpers.php';
 require __DIR__ . '/../models/User.php';
+require __DIR__ . '/../models/Venue.php';                              
 require __DIR__ . '/../controllers/HomeController.php';
 require __DIR__ . '/../controllers/AuthController.php';
 require __DIR__ . '/../controllers/DashboardController.php';
+require __DIR__ . '/../controllers/VenueController.php';               
 
 $routes = [
     'GET home' => [HomeController::class, 'index'],
@@ -23,6 +25,7 @@ $routes = [
     'GET manager' => [DashboardController::class, 'manager'],
     'GET server' => [DashboardController::class, 'server'],
     'GET admin' => [DashboardController::class, 'admin'],
+    'GET venues' => [VenueController::class, 'index'],                 
 ];
 
 $method = $_SERVER['REQUEST_METHOD'];
