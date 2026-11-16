@@ -25,7 +25,8 @@ $routes = [
     'GET manager' => [DashboardController::class, 'manager'],
     'GET server' => [DashboardController::class, 'server'],
     'GET admin' => [DashboardController::class, 'admin'],
-    'GET venues' => [VenueController::class, 'index'],                 
+    'GET venues' => [VenueController::class, 'index'],
+    'GET venue' => [VenueController::class, 'show'],
 ];
 
 $method = $_SERVER['REQUEST_METHOD'];

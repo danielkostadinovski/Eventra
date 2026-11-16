@@ -12,9 +12,9 @@ mt_srand(2026);
 
 $db->beginTransaction();
 
-// ---------------------------------------------------------------
+
 // Users
-// ---------------------------------------------------------------
+
 
 $hash = password_hash('Eventra2026!', PASSWORD_BCRYPT);
 
@@ -75,9 +75,9 @@ while (count($clients) < 40) {
     $clients[] = $addUser($firstName, $lastName, $email, 'Client');
 }
 
-// ---------------------------------------------------------------
-// Venues (the rates are in euro cents)
-// ---------------------------------------------------------------
+
+// venues (the rates are in euro cents)
+
 
 $insertVenue = $db->prepare(
     'INSERT INTO Venues (ManagerID, Name, Description, HourlyRate, MaxCapacity)
@@ -97,15 +97,36 @@ $venueList = [
     ['radostina', 'Mladost Event Center', 'A modern event hall in the Mladost business district of Sofia, with a stage and built-in sound and lighting. Suited for corporate events, birthdays and graduation parties.', 8500, 140],
 ];
 
+// the first photo of each venue is its cover photo on the venues page
+$photoList = [
+    'Vitosha Garden' => ['vitosha_garden.jpg', 'vitosha_garden2.jpg', 'vitosha_garden3.jpg'],
+    'Serdika Grand Hall' => ['serdika_grand.jpg', 'serdika_grand2.jpg'],
+    'Skyline Lounge' => ['skyline.jpg', 'skyline2.jpg', 'skyline3.jpg'],
+    'Boyana Villa' => ['boyana.jpg', 'boyana2.jpg', 'boyana3.jpg'],
+    'Lozenets Loft' => ['lozenets.jpg', 'lozenets2.jpg', 'lozenets3.jpg'],
+    'Pancharevo Lake House' => ['pancharevo.jpg', 'pancharevo2.jpg', 'pancharevo3.jpg'],
+    'Oborishte Salon' => ['oborishte3.jpg', 'oborishte.jpg', 'oborishte4.jpg'],
+    'Dragalevtsi Lodge' => ['dragalevtsi.jpg', 'dragalevtsi2.jpg', 'dragalevtsi3.jpg', 'dragalevtsi4.jpg'],
+    'Borisova Garden Pavilion' => ['borisova_garden.jpg', 'borisova_garden2.jpg', 'borisova_garden3.jpg', 'borisova_garden4.jpg'],
+    'Mladost Event Center' => ['mladost.jpg', 'mladost2.jpg', 'mladost3.jpg', 'mladost4.jpg'],
+];
+
+$insertPhoto = $db->prepare('INSERT INTO VenuePhotos (VenueID, FilePath) VALUES (?, ?)');
+
 $venues = [];
 foreach ($venueList as [$manager, $name, $description, $rate, $capacity]) {
     $insertVenue->execute([$managers[$manager], $name, $description, $rate, $capacity]);
-    $venues[] = ['id' => (int) $db->lastInsertId(), 'capacity' => $capacity];
+    $venueId = (int) $db->lastInsertId();
+    $venues[] = ['id' => $venueId, 'capacity' => $capacity];
+
+    foreach ($photoList[$name] as $photo) {
+        $insertPhoto->execute([$venueId, 'images/venues/' . $photo]);
+    }
 }
 
-// ---------------------------------------------------------------
-//  Equipment (price per unit per booking in euro cents)
-// ---------------------------------------------------------------
+
+// Equipment (price per unit per booking in euro cents)
+
 
 $insertEquipment = $db->prepare('INSERT INTO Equipment (Name, UnitPrice) VALUES (?, ?)');
 
@@ -124,9 +145,9 @@ foreach ($equipmentList as [$name, $price]) {
     $equipment[] = ['id' => (int) $db->lastInsertId(), 'price' => $price];
 }
 
-// ---------------------------------------------------------------
-//   Blackout dates 
-// ---------------------------------------------------------------
+
+// Blackout dates 
+
 
 $insertBlackout = $db->prepare('INSERT INTO BlackoutDates (VenueID, BlackoutDate, Reason) VALUES (?, ?, ?)');
 
@@ -146,9 +167,9 @@ foreach ($venues as $venue) {
     }
 }
 
-// ---------------------------------------------------------------
+
 // Bookings
-// ------------------------------------------------------------
+
 
 function chance(int $percent): bool
 {
@@ -195,7 +216,18 @@ $goodComments = [
     'The booking was super easy, the price was very clear from the start, and the evening went super smoothly!',
     'A wonderful place for a birthday party! We all had a great time!!',
     'The venue looked even better than in the photos! Highly recommended.',
-    'Very well organised. The consultation helped us plan every part of the evening.'
+    'Very well organised. The consultation helped us plan every part of the evening.',
+    'The garden was stunning in the evening and all of our guests kept taking photos!!!',
+    'Great value for the price, and the waiters were so friendly the whole night. Good job.',
+    'We booked it for my mom\'s 60th birthday and she looooved every minute of it!',
+    'The food was delicious and there was plenty of it, nobody left hungry ghahaha',
+    'The venue manager answered all our questions quickly which honestly made planning soo much easier.',
+    'Perfect for our company dinner! The projector and the sound worked out perfectly!',
+    'Beautiful decorations, awesome music and an amazing team. Honestly 10/10!',
+    'We were so scarred about the weather turning bad but the covered terrace saved the day!',
+    'The staff were always there when we needed something!',
+    'Our graduation party was litt! Thank you for everything!!',
+    'I have never booked something more easily ever lol! We had a great time!.'
 ];
 
 $badComments = [
@@ -204,6 +236,13 @@ $badComments = [
     'The staff were polite but there were not enough waiters for so many guests honestly....',
     'Nice place, but the music was too loud for the older guests, my grandparents had to leave early because of it..',
     'The evening was okay but the parking was very difficult.',
+    'The hall was nice but it got really hot inside.',
+    'The food was good, but we waited almost an hour for the main course :(',
+    'It was hard to find the entrance, some of our guests got lost on the way.',
+    'The photo booth stopped working halfway through the night...so dissapointing.',
+    'Not enough tables for the number of guests we had so some people had to stand.',
+    'The lights were too dim for the speeches and the projector was lowkey hard to see.',
+    'Overall okay, but we expected more for the price we paid honestly.'
 ];
 
 $today = date('Y-m-d');
