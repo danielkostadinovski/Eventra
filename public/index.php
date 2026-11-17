@@ -35,6 +35,9 @@ $routes = [
     'POST booking-change' => [BookingController::class, 'change'],
     'POST booking-submit' => [BookingController::class, 'submit'],
     'GET booking' => [BookingController::class, 'show'],
+    'POST booking-cancel' => [BookingController::class, 'cancel'],
+    'POST booking-pay' => [BookingController::class, 'pay'],
+    'POST review-add' => [BookingController::class, 'addReview'],
 
 ];
 
@@ -58,6 +61,7 @@ if (!isset($routes["$method $page"])) {
     ]);
     exit;
 }
-
+// cancel the pending and approved bookings whose date arrived without getting confirmed
+Booking::cancelExpired();
 [$controller, $action] = $routes["$method $page"];
 $controller::$action();

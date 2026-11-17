@@ -15,6 +15,7 @@
             <?php if ($navUser = currentUser()): ?>
                 <?php if ($navUser['Role'] === 'Client'): ?>                                 
                     <a class="btn btn-eventra" href="index.php?page=venues">Venues</a>     
+                    <a class="btn btn-eventra" href="index.php?page=client">My bookings</a>
                 <?php endif; ?>                                                            
                 <span><?= e($navUser['FirstName']) ?>, <?= e(roleName($navUser['Role'])) ?></span>
                 <form method="post" action="index.php?page=logout">

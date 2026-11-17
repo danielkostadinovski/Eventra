@@ -1,4 +1,3 @@
-
 <?php
 
 class BookingController {
@@ -100,10 +99,11 @@ class BookingController {
         VenueController::show($form, $error);
     }
 
-    // the booking details page
-    public static function show(): void {
+    // the booking details page ($reviewError and $reviewForm are only given when the review form
+    //is shown again after an error so the client's rating and comment are kept)
+    public static function show(int $bookingId = 0, ?string $reviewError = null, array $reviewForm = []): void {
         $user = requireRole('Client');
-        $booking = Booking::findForClient((int) ($_GET['id'] ?? 0), $user['UserID']);
+        $booking = Booking::findForClient($bookingId ?: (int) ($_GET['id'] ?? 0), $user['UserID']);
 
         if ($booking === null) {
             self::notFound('Booking not found');
@@ -117,7 +117,76 @@ class BookingController {
             'booking' => $booking,
             'equipment' => $equipment,
             'price' => Booking::calculatePrice($booking, $equipment),
+            'reviewError' => $reviewError,
+            'reviewForm' => $reviewForm,
         ]);
+    }
+
+    public static function cancel(): void {
+        $user = requireRole('Client');
+        $booking = Booking::findForClient((int) ($_POST['booking_id'] ?? 0), $user['UserID']);
+
+        if ($booking === null) {
+            self::notFound('Booking not found');
+            return;
+        }
+
+        if (Booking::cancel($booking['BookingID'])) {
+            setFlash('Your booking has been cancelled.');
+        } else {
+            setFlash('This booking can no longer be cancelled.');
+        }
+        redirect('booking&id=' . $booking['BookingID']);
+    }
+
+    public static function pay(): void {
+        $user = requireRole('Client');
+        $booking = Booking::findForClient((int) ($_POST['booking_id'] ?? 0), $user['UserID']);
+
+        if ($booking === null) {
+            self::notFound('Booking not found');
+            return;
+        }
+
+        if (Booking::pay($booking['BookingID'])) {
+            setFlash('Thank you, we received your payment.');
+        } else {
+            setFlash('This booking has no payment to make.');
+        }
+        redirect('booking&id=' . $booking['BookingID']);
+    }
+
+    public static function addReview(): void {
+        $user = requireRole('Client');
+        $booking = Booking::findForClient((int) ($_POST['booking_id'] ?? 0), $user['UserID']);
+
+        if ($booking === null) {
+            self::notFound('Booking not found');
+            return;
+        }
+
+        $rating = (int) ($_POST['rating'] ?? 0);
+        $comment = trim($_POST['comment'] ?? '');
+        $error = null;
+
+        if ($booking['Status'] !== 'Completed' || $booking['ReviewRating'] !== null) {
+            $error = 'This booking cannot be reviewed.';
+        } elseif ($rating < 1 || $rating > 5) {
+            $error = 'Please choose a rating from 1 to 5.';
+        } elseif ($comment === '') {
+            $error = 'Please write a short comment.';
+        } elseif (mb_strlen($comment) > 1000) {
+            $error = 'The comment can be at most 1000 characters long.';
+        }
+
+        if ($error !== null) {
+            self::show($booking['BookingID'], $error, ['rating' => $rating, 'comment' => $comment]);
+            return;
+        }
+
+        Booking::addReview($booking['BookingID'], $rating, $comment);
+        setFlash('Thank you for your review.');
+        redirect('booking&id=' . $booking['BookingID']);
     }
 
     private static function readForm(): array {
@@ -132,7 +201,7 @@ class BookingController {
             'equipment' => array_map('intval', (array) ($_POST['equipment'] ?? [])),
         ];
     }
-
+    
     // makes the checks for an overdue payment, for valid date, a date after today, guests, start time, hours, if it ends by midnight, waitstaff, and equipment
     // it returns an error message or null if everything is fine
     private static function validate(array $user, array $venue, array $form, array $catalog): ?string {

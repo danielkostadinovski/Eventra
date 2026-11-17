@@ -1,4 +1,3 @@
-
 <?php
 
 class Booking {
@@ -59,11 +58,13 @@ class Booking {
         $statement = db()->prepare(
             'SELECT b.BookingID, b.VenueID, b.EventDate, b.StartTime, s.EndTime, b.HoursBooked,
                     b.GuestCount, b.StaffCount, b.WantsFood, b.VenueHourlyRate, b.HourlyStaffRate,
-                    b.FoodRatePerPerson, b.Status, b.CreatedAt, v.Name AS VenueName, p.Status AS PaymentStatus
+                    b.FoodRatePerPerson, b.Status, b.CreatedAt, v.Name AS VenueName, p.Status AS PaymentStatus,
+                    p.PaidAt, r.Rating AS ReviewRating, r.Comment AS ReviewComment
              FROM Bookings AS b
              JOIN Venues AS v ON v.VenueID = b.VenueID
              JOIN BookingSchedule AS s ON s.BookingID = b.BookingID
              LEFT JOIN Payments AS p ON p.BookingID = b.BookingID
+             LEFT JOIN Reviews AS r ON r.BookingID = b.BookingID
              WHERE b.BookingID = ? AND b.ClientID = ?'
         );
         $statement->execute([$bookingId, $clientId]);
@@ -116,5 +117,62 @@ class Booking {
             'lines' => $lines,
             'total' => array_sum(array_column($lines, 'amount')),
         ];
+    }
+
+    // all of the the client's bookings for the My Bookings page with the total from the BookingPrices view
+    public static function allForClient(int $clientId): array {
+        $statement = db()->prepare(
+            'SELECT b.BookingID, b.EventDate, b.StartTime, b.Status, v.Name AS VenueName,
+                    pr.TotalPrice, p.Status AS PaymentStatus, r.BookingID IS NOT NULL AS HasReview,
+                    (SELECT FilePath FROM VenuePhotos
+                     WHERE VenueID = b.VenueID
+                     ORDER BY PhotoID
+                     LIMIT 1) AS CoverPhoto
+             FROM Bookings AS b
+             JOIN Venues AS v ON v.VenueID = b.VenueID
+             JOIN BookingPrices AS pr ON pr.BookingID = b.BookingID
+             LEFT JOIN Payments AS p ON p.BookingID = b.BookingID
+             LEFT JOIN Reviews AS r ON r.BookingID = b.BookingID
+             WHERE b.ClientID = ?
+             ORDER BY b.EventDate'
+        );
+        $statement->execute([$clientId]);
+        return $statement->fetchAll();
+    }
+
+    // a client can cancel only a pending or approved booking ( returns false if nothing was cancelled)
+    public static function cancel(int $bookingId): bool {
+        $statement = db()->prepare(
+            "UPDATE Bookings SET Status = 'Cancelled'
+             WHERE BookingID = ? AND Status IN ('Pending', 'Approved')"
+        );
+        $statement->execute([$bookingId]);
+        return $statement->rowCount() === 1;
+    }
+
+    // simulated Pay Now (an unpaid payment of a confirmed or completed booking becomes paid)
+    public static function pay(int $bookingId): bool {
+        $statement = db()->prepare(
+            "UPDATE Payments SET Status = 'Paid', PaidAt = datetime('now', 'localtime')
+             WHERE BookingID = ? AND Status = 'Unpaid'
+               AND BookingID IN (SELECT BookingID FROM Bookings WHERE Status IN ('Confirmed', 'Completed'))"
+        );
+        $statement->execute([$bookingId]);
+        return $statement->rowCount() === 1;
+    }
+
+    public static function addReview(int $bookingId, int $rating, string $comment): void {
+        $statement = db()->prepare('INSERT INTO Reviews (BookingID, Rating, Comment) VALUES (?, ?, ?)');
+        $statement->execute([$bookingId, $rating, $comment]);
+    }
+
+    // pending or approved booking whose event date has arrived without being confirmed
+    // is cancelled automatically - it runs in the start of every request 
+    public static function cancelExpired(): void {
+        db()->exec(
+            "UPDATE Bookings SET Status = 'Cancelled'
+             WHERE Status IN ('Pending', 'Approved')
+               AND EventDate <= date('now', 'localtime')"
+        );
     }
 }
