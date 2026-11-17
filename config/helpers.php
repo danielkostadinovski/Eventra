@@ -99,3 +99,8 @@ function requireRole(string $role): array
 function money(int $cents): string {
     return '€' . number_format($cents / 100, 2);
 }
+
+// for example 1 hour and 4 hours (for plural)
+function plural(int $count, string $word): string {
+    return $count . ' ' . $word . ($count === 1 ? '' : 's');
+}

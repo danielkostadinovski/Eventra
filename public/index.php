@@ -8,11 +8,15 @@ session_start([
 require __DIR__ . '/../config/db.php';
 require __DIR__ . '/../config/helpers.php';
 require __DIR__ . '/../models/User.php';
-require __DIR__ . '/../models/Venue.php';                              
+require __DIR__ . '/../models/Venue.php';
+require __DIR__ . '/../models/Equipment.php';
+require __DIR__ . '/../models/Booking.php';                              
 require __DIR__ . '/../controllers/HomeController.php';
 require __DIR__ . '/../controllers/AuthController.php';
 require __DIR__ . '/../controllers/DashboardController.php';
-require __DIR__ . '/../controllers/VenueController.php';               
+require __DIR__ . '/../controllers/VenueController.php'; 
+require __DIR__ . '/../controllers/BookingController.php';
+              
 
 $routes = [
     'GET home' => [HomeController::class, 'index'],
@@ -27,6 +31,11 @@ $routes = [
     'GET admin' => [DashboardController::class, 'admin'],
     'GET venues' => [VenueController::class, 'index'],
     'GET venue' => [VenueController::class, 'show'],
+    'POST booking-review' => [BookingController::class, 'review'],
+    'POST booking-change' => [BookingController::class, 'change'],
+    'POST booking-submit' => [BookingController::class, 'submit'],
+    'GET booking' => [BookingController::class, 'show'],
+
 ];
 
 $method = $_SERVER['REQUEST_METHOD'];

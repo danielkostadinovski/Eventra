@@ -270,8 +270,9 @@ while ($bookings < 500) {
     $food = chance(70) ? 1 : 0;
     $created = date('Y-m-d H:i:s', min(strtotime("$date -30 days"), time()));
 
+    $client = pick($clients);
     $insertBooking->execute([
-        $venue['id'], pick($clients), $date, $start, $hours, $guests, $staff, $food,
+        $venue['id'], $client, $date, $start, $hours, $guests, $staff, $food,
         $venueRates[$venue['id']], $rates['HourlyStaffRate'], $rates['FoodRatePerPerson'], $created,
     ]);
     $bookingId = (int) $db->lastInsertId();
@@ -321,7 +322,8 @@ while ($bookings < 500) {
     if ($final === 'Completed') {
         $updateStatus->execute(['Completed', $bookingId]);
 
-        if (chance(95)) {
+        // Ivana and Petar (the first two clients) always pay (so that they are never blocked by an overdue payment during the demo)
+        if (chance(95) || $client === $clients[0] || $client === $clients[1]) {
             $markPaid->execute([$date . ' 12:00:00', $bookingId]);
         }
 

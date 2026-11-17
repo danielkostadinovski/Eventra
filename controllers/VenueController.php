@@ -1,4 +1,3 @@
-
 <?php
 
 class VenueController {
@@ -11,10 +10,12 @@ class VenueController {
         ]);
     }
 
-    public static function show(): void {
+    // $form and $error are given only when the booking form is shown again
+    // so after an error or after "go back and change" so that the client answers are kept
+    public static function show(array $form = [], ?string $error = null): void {
         requireRole('Client');
 
-        $venue = Venue::findActive((int) ($_GET['id'] ?? 0));
+        $venue = Venue::findActive((int) ($form['venue_id'] ?? $_GET['id'] ?? 0));
 
         if ($venue === null) {
             http_response_code(404);
@@ -29,7 +30,7 @@ class VenueController {
         // Clients can look up to 12 months ahead
         $thisMonth = date('Y-m');
         $lastMonth = date('Y-m', strtotime('first day of +11 months'));
-        $month = $_GET['month'] ?? $thisMonth;
+        $month = $_GET['month'] ?? substr($form['event_date'] ?? '', 0, 7);
 
         if (!preg_match('/^\d{4}-\d{2}$/', $month) || strtotime($month . '-01') === false || $month < $thisMonth) {
             $month = $thisMonth;
@@ -45,7 +46,7 @@ class VenueController {
         $averageRating = $reviews ? array_sum(array_column($reviews, 'Rating')) / count($reviews) : null;
 
         view('venues/show', [
-            'title' => $venue['Name'] . ' – Eventra',
+            'title' => $venue['Name'] . ' - Eventra',
             'venue' => $venue,
             'photos' => Venue::photos($venue['VenueID']),
             'reviews' => $reviews,
@@ -56,6 +57,11 @@ class VenueController {
             ],
             'previousMonth' => $month > $thisMonth ? date('Y-m', strtotime($month . '-01 -1 month')) : null,
             'followingMonth' => $month < $lastMonth ? $nextMonth : null,
+            'equipment' => Equipment::allActive(),
+            'rates' => Booking::currentRates(),
+            'startTimes' => BookingController::START_TIMES,
+            'form' => $form,
+            'error' => $error,
         ]);
     }
 

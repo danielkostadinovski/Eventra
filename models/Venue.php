@@ -61,4 +61,8 @@ class Venue {
         $statement->execute([$venueId, $venueId]);
         return $statement->fetchAll(PDO::FETCH_COLUMN);
     }
+
+    public static function isDateFree(int $venueId, string $date): bool {
+        return !in_array($date, self::unavailableDates($venueId), true);
+    }
 }

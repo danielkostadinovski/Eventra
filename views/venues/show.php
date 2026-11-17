@@ -74,7 +74,7 @@
 
                         <?php foreach ($month['days'] as $day): ?>
                             <?php if ($day['available']): ?>
-                                <button type="button" class="calendar-day" data-date="<?= $day['date'] ?>"><?= $day['number'] ?></button>
+                               <button type="button" class="calendar-day <?= $day['date'] === ($form['event_date'] ?? '') ? 'selected' : '' ?>" data-date="<?= $day['date'] ?>"><?= $day['number'] ?></button>
                             <?php else: ?>
                                 <span class="calendar-day calendar-day-taken"><?= $day['number'] ?></span>
                             <?php endif; ?>
@@ -113,13 +113,74 @@
     </div>
 
     <div class="col-lg-5">
-        <div class="booking-box">
+        <div class="booking-box" id="booking">
             <p class="h4 mb-1"><?= money($venue['HourlyRate']) ?> <span class="fs-6 fw-normal text-muted">per hour</span></p>
             <p class="text-muted small mb-0">Up to <?= e($venue['MaxCapacity']) ?> guests</p>
             <hr>
-            <p class="text-muted small mb-1">Date</p>
-            <p class="fw-semibold mb-0" id="selected-date">Choose a date in the calendar</p>
-            <input type="hidden" id="event-date" name="event_date">
+
+            <?php if ($error): ?>
+                <div class="alert alert-danger"><?= e($error) ?></div>
+            <?php endif; ?>
+
+            <form method="post" action="index.php?page=booking-review">
+                <?= csrfField() ?>
+                <input type="hidden" name="venue_id" value="<?= $venue['VenueID'] ?>">
+                <input type="hidden" id="event-date" name="event_date" value="<?= e($form['event_date'] ?? '') ?>">
+
+                <p class="text-muted small mb-1">Date</p>
+                <p class="fw-semibold mb-3" id="selected-date">
+                    <?= !empty($form['event_date']) ? date('l, j F Y', strtotime($form['event_date'])) : 'Choose a date in the calendar' ?>
+                </p>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label" for="start-time">Start time</label>
+                        <select class="form-select" id="start-time" name="start_time">
+                            <?php foreach ($startTimes as $time): ?>
+                                <option <?= ($form['start_time'] ?? '18:00') === $time ? 'selected' : '' ?>><?= $time ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="hours">Hours</label>
+                        <select class="form-select" id="hours" name="hours">
+                            <?php for ($hours = 1; $hours <= 12; $hours++): ?>
+                                <option <?= ($form['hours'] ?? 4) === $hours ? 'selected' : '' ?>><?= $hours ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="guests">Guests</label>
+                        <input type="number" class="form-control" id="guests" name="guests"
+                               min="1" max="<?= e($venue['MaxCapacity']) ?>" value="<?= !empty($form['guests']) ? e($form['guests']) : '' ?>">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="staff-count">Waiting staff</label>
+                        <input type="number" class="form-control" id="staff-count" name="staff_count"
+                               min="0" max="25" value="<?= e($form['staff_count'] ?? 0) ?>">
+                    </div>
+                </div>
+                <p class="text-muted small">Waiting staff cost <?= money($rates['HourlyStaffRate']) ?> per server per hour, leave it at 0 if you do not need any.</p>
+
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="wants-food" name="wants_food" value="1" <?= !empty($form['wants_food']) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="wants-food">Catering for all guests (<?= money($rates['FoodRatePerPerson']) ?> per guest)</label>
+                </div>
+
+                <p class="mb-2">Equipment</p>
+                <?php foreach ($equipment as $item): ?>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label for="equipment-<?= $item['EquipmentID'] ?>">
+                            <?= e($item['Name']) ?> <span class="text-muted small">(<?= money($item['UnitPrice']) ?> each)</span>
+                        </label>
+                        <input type="number" class="form-control equipment-quantity" id="equipment-<?= $item['EquipmentID'] ?>"
+                               name="equipment[<?= $item['EquipmentID'] ?>]" min="0" max="10"
+                               value="<?= e($form['equipment'][$item['EquipmentID']] ?? 0) ?>">
+                    </div>
+                <?php endforeach; ?>
+
+                <button type="submit" class="btn btn-eventra w-100 mt-3">Review booking</button>
+            </form>
         </div>
     </div>
 </div>
