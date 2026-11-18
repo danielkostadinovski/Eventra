@@ -10,12 +10,14 @@ require __DIR__ . '/../config/helpers.php';
 require __DIR__ . '/../models/User.php';
 require __DIR__ . '/../models/Venue.php';
 require __DIR__ . '/../models/Equipment.php';
-require __DIR__ . '/../models/Booking.php';                              
+require __DIR__ . '/../models/Booking.php';        
+require __DIR__ . '/../models/StaffAssignment.php';                      
 require __DIR__ . '/../controllers/HomeController.php';
 require __DIR__ . '/../controllers/AuthController.php';
 require __DIR__ . '/../controllers/DashboardController.php';
 require __DIR__ . '/../controllers/VenueController.php'; 
 require __DIR__ . '/../controllers/BookingController.php';
+require __DIR__ . '/../controllers/ManagerController.php';
               
 
 $routes = [
@@ -38,6 +40,13 @@ $routes = [
     'POST booking-cancel' => [BookingController::class, 'cancel'],
     'POST booking-pay' => [BookingController::class, 'pay'],
     'POST review-add' => [BookingController::class, 'addReview'],
+    'GET manage-booking' => [ManagerController::class, 'booking'],
+    'GET manage-attachment' => [ManagerController::class, 'attachment'],
+    'POST manage-status' => [ManagerController::class, 'updateStatus'],
+    'POST manage-notes' => [ManagerController::class, 'saveNotes'],
+    'POST manage-paid' => [ManagerController::class, 'markPaid'],
+    'POST manage-assign' => [ManagerController::class, 'assignServer'],
+    'POST manage-withdraw' => [ManagerController::class, 'withdrawServer'],
 
 ];
 

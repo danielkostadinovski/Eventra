@@ -175,4 +175,55 @@ class Booking {
                AND EventDate <= date('now', 'localtime')"
         );
     }
+
+    // all bookings of the venues that a venue manager is assigned to, for the manager's dashboard
+    public static function allForManager(int $managerId): array {
+        $statement = db()->prepare(
+            "SELECT b.BookingID, b.EventDate, b.StartTime, b.Status, b.GuestCount, b.StaffCount,
+                    v.Name AS VenueName, u.FirstName || ' ' || u.LastName AS ClientName,
+                    pr.TotalPrice, p.Status AS PaymentStatus,
+                    (SELECT COUNT(*) FROM StaffAssignments AS sa
+                     WHERE sa.BookingID = b.BookingID AND sa.Status = 'Accepted') AS AcceptedServers
+             FROM Bookings AS b
+             JOIN Venues AS v ON v.VenueID = b.VenueID
+             JOIN Users AS u ON u.UserID = b.ClientID
+             JOIN BookingPrices AS pr ON pr.BookingID = b.BookingID
+             LEFT JOIN Payments AS p ON p.BookingID = b.BookingID
+             WHERE v.ManagerID = ?
+             ORDER BY b.EventDate"
+        );
+        $statement->execute([$managerId]);
+        return $statement->fetchAll();
+    }
+
+    // one booking, but only if it belongs to one of the manager's venues
+    public static function findForManager(int $bookingId, int $managerId): ?array {
+        $statement = db()->prepare(
+            'SELECT b.BookingID, b.VenueID, b.EventDate, b.StartTime, s.EndTime, b.HoursBooked,
+                    b.GuestCount, b.StaffCount, b.WantsFood, b.VenueHourlyRate, b.HourlyStaffRate,
+                    b.FoodRatePerPerson, b.Status, b.ConsultationNotes, b.AttachmentPath, b.CreatedAt,
+                    v.Name AS VenueName, u.FirstName, u.LastName, u.Email,
+                    p.Status AS PaymentStatus, p.PaidAt
+             FROM Bookings AS b
+             JOIN Venues AS v ON v.VenueID = b.VenueID
+             JOIN Users AS u ON u.UserID = b.ClientID
+             JOIN BookingSchedule AS s ON s.BookingID = b.BookingID
+             LEFT JOIN Payments AS p ON p.BookingID = b.BookingID
+             WHERE b.BookingID = ? AND v.ManagerID = ?'
+        );
+        $statement->execute([$bookingId, $managerId]);
+        return $statement->fetch() ?: null;
+    }
+
+    // changes the status only if the booking still has the expected status - returns false if nothing changed
+    public static function changeStatus(int $bookingId, string $from, string $to): bool {
+        $statement = db()->prepare('UPDATE Bookings SET Status = ? WHERE BookingID = ? AND Status = ?');
+        $statement->execute([$to, $bookingId, $from]);
+        return $statement->rowCount() === 1;
+    }
+
+    public static function saveNotes(int $bookingId, ?string $notes, ?string $attachmentPath): void {
+        $statement = db()->prepare('UPDATE Bookings SET ConsultationNotes = ?, AttachmentPath = ? WHERE BookingID = ?');
+        $statement->execute([$notes, $attachmentPath, $bookingId]);
+    }
 }

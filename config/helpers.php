@@ -19,16 +19,17 @@ function redirect(string $page): void
     exit;
 }
 
-function setFlash(string $message): void
+// $type is "success" (green) or "danger" (red) (the names of bootstrap's alert colors)
+function setFlash(string $message, string $type = 'success'): void
 {
-    $_SESSION['flash'] = $message;
+    $_SESSION['flash'] = ['message' => $message, 'type' => $type];
 }
 
-function takeFlash(): ?string
+function takeFlash(): ?array
 {
-    $message = $_SESSION['flash'] ?? null;
+    $flash = $_SESSION['flash'] ?? null;
     unset($_SESSION['flash']);
-    return $message;
+    return $flash;
 }
 
 function csrfToken(): string

@@ -1,4 +1,3 @@
-
 <?php
 
 class Venue {
@@ -64,5 +63,16 @@ class Venue {
 
     public static function isDateFree(int $venueId, string $date): bool {
         return !in_array($date, self::unavailableDates($venueId), true);
+    }
+
+    public static function forManager(int $managerId): array {
+        $statement = db()->prepare(
+            'SELECT VenueID, Name, HourlyRate, MaxCapacity, IsActive
+             FROM Venues
+             WHERE ManagerID = ?
+             ORDER BY Name'
+        );
+        $statement->execute([$managerId]);
+        return $statement->fetchAll();
     }
 }

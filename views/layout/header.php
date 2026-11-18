@@ -16,7 +16,11 @@
                 <?php if ($navUser['Role'] === 'Client'): ?>                                 
                     <a class="btn btn-eventra" href="index.php?page=venues">Venues</a>     
                     <a class="btn btn-eventra" href="index.php?page=client">My bookings</a>
-                <?php endif; ?>                                                            
+                <?php endif; ?>      
+                <?php if ($navUser['Role'] === 'Manager'): ?>
+                    <a class="btn btn-eventra" href="index.php?page=manager">Bookings</a>
+                <?php endif; ?>
+                
                 <span><?= e($navUser['FirstName']) ?>, <?= e(roleName($navUser['Role'])) ?></span>
                 <form method="post" action="index.php?page=logout">
                     <?= csrfField() ?>
@@ -31,5 +35,8 @@
 </nav>
 <main class="<?= $mainClass ?? 'container py-5' ?>">
     <?php if ($flash = takeFlash()): ?>
-        <div class="alert alert-success"><?= e($flash) ?></div>
+        <div class="alert alert-<?= $flash['type'] ?>"><?= e($flash['message']) ?></div>
     <?php endif; ?>
+
+
+    

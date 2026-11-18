@@ -210,3 +210,8 @@ footer {
 .equipment-quantity {
     width: 80px;
 }
+
+/* black links in the pages like the text around them */
+main a {
+    color: var(--bs-body-color);
+}

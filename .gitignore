@@ -15,3 +15,6 @@ composer.phar
 *.db
 *.db-wal
 *.db-shm
+
+# Files uploaded through the application
+uploads/
