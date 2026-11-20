@@ -19,8 +19,8 @@
                 <?php endif; ?>      
                 <?php if ($navUser['Role'] === 'Manager'): ?>
                     <a class="btn btn-eventra" href="index.php?page=manager">Bookings</a>
+                    <a class="btn btn-eventra" href="index.php?page=manage-venues">Venues</a>
                 <?php endif; ?>
-                
                 <span><?= e($navUser['FirstName']) ?>, <?= e(roleName($navUser['Role'])) ?></span>
                 <form method="post" action="index.php?page=logout">
                     <?= csrfField() ?>

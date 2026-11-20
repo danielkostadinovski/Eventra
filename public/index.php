@@ -47,6 +47,13 @@ $routes = [
     'POST manage-paid' => [ManagerController::class, 'markPaid'],
     'POST manage-assign' => [ManagerController::class, 'assignServer'],
     'POST manage-withdraw' => [ManagerController::class, 'withdrawServer'],
+    'GET manage-venues' => [ManagerController::class, 'venues'],
+    'GET manage-venue' => [ManagerController::class, 'venue'],
+    'POST manage-venue-save' => [ManagerController::class, 'saveVenue'],
+    'POST manage-photo-add' => [ManagerController::class, 'addPhoto'],
+    'POST manage-photo-delete' => [ManagerController::class, 'deletePhoto'],
+    'POST manage-blackout-add' => [ManagerController::class, 'addBlackout'],
+    'POST manage-blackout-delete' => [ManagerController::class, 'deleteBlackout'],
 
 ];
 

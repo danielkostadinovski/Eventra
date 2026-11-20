@@ -28,12 +28,20 @@
                 </form>
             </div>
         <?php elseif ($booking['Status'] === 'Approved'): ?>
-            <p class="text-muted">Confirm the booking after the consultation. The client can then pay and you can assign servers.</p>
-            <form method="post" action="index.php?page=manage-status">
-                <?= csrfField() ?>
-                <input type="hidden" name="booking_id" value="<?= $booking['BookingID'] ?>">
-                <button type="submit" name="action" value="confirm" class="btn btn-eventra">Confirm booking</button>
-            </form>
+            <p class="text-muted">Confirm the booking after the consultation. The client can then pay and you can assign servers. If the event cannot take place, cancel the booking.</p>
+            <div class="d-flex gap-2">
+                <form method="post" action="index.php?page=manage-status">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="booking_id" value="<?= $booking['BookingID'] ?>">
+                    <button type="submit" name="action" value="confirm" class="btn btn-eventra">Confirm booking</button>
+                </form>
+                <form method="post" action="index.php?page=manage-status"
+                      onsubmit="return confirm('Do you want to cancel this booking?');">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="booking_id" value="<?= $booking['BookingID'] ?>">
+                    <button type="submit" name="action" value="cancel" class="btn btn-eventra">Cancel booking</button>
+                </form>
+            </div>
         <?php elseif ($booking['Status'] === 'Confirmed' && $booking['EventDate'] <= date('Y-m-d')): ?>
             <p class="text-muted">The event has taken place. Mark it as completed so that the client can leave a review.</p>
             <form method="post" action="index.php?page=manage-status">

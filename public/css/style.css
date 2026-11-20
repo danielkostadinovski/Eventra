@@ -215,3 +215,11 @@ footer {
 main a {
     color: var(--bs-body-color);
 }
+
+/* venue manager - photos on the venue page */
+.manage-photo {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 12px;
+}
