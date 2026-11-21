@@ -17,6 +17,9 @@
                     <a class="btn btn-eventra" href="index.php?page=venues">Venues</a>     
                     <a class="btn btn-eventra" href="index.php?page=client">My bookings</a>
                 <?php endif; ?>      
+                <?php if ($navUser['Role'] === 'Server'): ?>
+                    <a class="btn btn-eventra" href="index.php?page=server">My events</a>
+                <?php endif; ?>
                 <?php if ($navUser['Role'] === 'Manager'): ?>
                     <a class="btn btn-eventra" href="index.php?page=manager">Bookings</a>
                     <a class="btn btn-eventra" href="index.php?page=manage-venues">Venues</a>
@@ -35,7 +38,7 @@
 </nav>
 <main class="<?= $mainClass ?? 'container py-5' ?>">
     <?php if ($flash = takeFlash()): ?>
-        <div class="alert alert-<?= $flash['type'] ?>"><?= e($flash['message']) ?></div>
+        <div class="alert alert-<?= $flash['type'] ?> <?= ($mainClass ?? null) === '' ? 'flash-bar' : '' ?>"><?= e($flash['message']) ?></div>
     <?php endif; ?>
 
 

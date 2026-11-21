@@ -202,6 +202,7 @@ class ManagerController {
 
         view('manager/venues', [
             'title' => 'Your venues - Eventra',
+            'mainClass' => '',
             'venues' => Venue::forManager($user['UserID']),
         ]);
     }

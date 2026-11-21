@@ -52,4 +52,44 @@ class StaffAssignment {
         $statement->execute([$assignmentId, $bookingId]);
         return $statement->rowCount() === 1;
     }
+
+    // every assignment of one server with the event's details and what the event pays
+    public static function forServer(int $serverId): array {
+        $statement = db()->prepare(
+            'SELECT sa.AssignmentID, sa.Status, b.BookingID, b.EventDate, b.StartTime, s.EndTime,
+                    b.HoursBooked, b.GuestCount, b.HourlyStaffRate, b.Status AS BookingStatus,
+                    b.HoursBooked * b.HourlyStaffRate AS Earnings, v.Name AS VenueName
+             FROM StaffAssignments AS sa
+             JOIN Bookings AS b ON b.BookingID = sa.BookingID
+             JOIN BookingSchedule AS s ON s.BookingID = b.BookingID
+             JOIN Venues AS v ON v.VenueID = b.VenueID
+             WHERE sa.ServerID = ?
+             ORDER BY b.EventDate, b.StartTime'
+        );
+        $statement->execute([$serverId]);
+        return $statement->fetchAll();
+    }
+
+    // the server's total earnings and number of events (counting only completed events)
+    public static function totalEarnings(int $serverId): array {
+        $statement = db()->prepare(
+            "SELECT COALESCE(SUM(Earnings), 0) AS Total, COUNT(*) AS Events
+             FROM ServerEarnings
+             WHERE ServerID = ? AND BookingStatus = 'Completed'"
+        );
+        $statement->execute([$serverId]);
+        return $statement->fetch();
+    }
+
+    // the server accepts or declines one of their own pending assignments (returns false if nothing changed) 
+    // the triggers check that the booking is still confirmed
+    public static function respond(int $assignmentId, int $serverId, string $status): bool {
+        $statement = db()->prepare(
+            "UPDATE StaffAssignments
+             SET Status = ?
+             WHERE AssignmentID = ? AND ServerID = ? AND Status = 'Pending'"
+        );
+        $statement->execute([$status, $assignmentId, $serverId]);
+        return $statement->rowCount() === 1;
+    }
 }

@@ -223,3 +223,24 @@ main a {
     object-fit: cover;
     border-radius: 12px;
 }
+
+
+/* charcoal band under the navigation bar */
+
+.page-band {
+    padding: 2.5rem 0;
+    background-color: #2b2b2b;
+    color: #fff;
+}
+
+.page-band p {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* the message after an action on pages that start with a band or a video */
+.flash-bar {
+    margin-bottom: 0;
+    border: 0;
+    border-radius: 0;
+    text-align: center;
+}

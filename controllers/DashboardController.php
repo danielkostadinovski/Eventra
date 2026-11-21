@@ -54,18 +54,13 @@ class DashboardController
 
         view('manager/dashboard', [
             'title' => 'Bookings - Eventra',
+            'mainClass' => '',
             'user' => $user,
             'venues' => Venue::forManager($user['UserID']),
             'sections' => $sections,
             // the 20 most recent past bookings, newest first
             'past' => array_slice(array_reverse($sections['past']), 0, 20),
         ]);
-    }
-
-    public static function server(): void
-    {
-        $user = requireRole('Server');
-        view('dashboard', ['title' => 'Server - Eventra', 'user' => $user]);
     }
 
     public static function admin(): void

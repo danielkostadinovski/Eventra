@@ -18,6 +18,7 @@ require __DIR__ . '/../controllers/DashboardController.php';
 require __DIR__ . '/../controllers/VenueController.php'; 
 require __DIR__ . '/../controllers/BookingController.php';
 require __DIR__ . '/../controllers/ManagerController.php';
+require __DIR__ . '/../controllers/ServerController.php';
               
 
 $routes = [
@@ -29,7 +30,8 @@ $routes = [
     'POST logout' => [AuthController::class, 'logout'],
     'GET client' => [DashboardController::class, 'client'],
     'GET manager' => [DashboardController::class, 'manager'],
-    'GET server' => [DashboardController::class, 'server'],
+    'GET server' => [ServerController::class, 'dashboard'],
+    'POST server-respond' => [ServerController::class, 'respond'],
     'GET admin' => [DashboardController::class, 'admin'],
     'GET venues' => [VenueController::class, 'index'],
     'GET venue' => [VenueController::class, 'show'],
