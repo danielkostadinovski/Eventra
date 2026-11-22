@@ -10,6 +10,6 @@ class HomeController
             redirect(dashboardPage($user));
         }
 
-        view('home', ['title' => 'Eventra – Book an event venue', 'mainClass' => 'd-flex']);
+        view('home', ['title' => 'Eventra - Book an event venue', 'mainClass' => 'd-flex']);
     }
 }

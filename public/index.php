@@ -19,8 +19,19 @@ require __DIR__ . '/../controllers/VenueController.php';
 require __DIR__ . '/../controllers/BookingController.php';
 require __DIR__ . '/../controllers/ManagerController.php';
 require __DIR__ . '/../controllers/ServerController.php';
-              
+require __DIR__ . '/../controllers/AdminController.php';
 
+// if something unexpected goes wrong (like for example the database stays locked for more than
+// 5 seconds) then the user gets an error page and the details go to the server's log only
+set_exception_handler(function (Throwable $e) {
+    error_log($e->getMessage());
+    http_response_code(500);
+    view('error', [
+        'heading' => 'Something went wrong',
+        'message' => 'Please try again in a moment.',
+    ]);
+});
+              
 $routes = [
     'GET home' => [HomeController::class, 'index'],
     'GET login' => [AuthController::class, 'showLogin'],
@@ -32,7 +43,16 @@ $routes = [
     'GET manager' => [DashboardController::class, 'manager'],
     'GET server' => [ServerController::class, 'dashboard'],
     'POST server-respond' => [ServerController::class, 'respond'],
-    'GET admin' => [DashboardController::class, 'admin'],
+    'GET admin' => [AdminController::class, 'dashboard'],
+    'GET admin-venues' => [AdminController::class, 'venues'],
+    'GET admin-venue' => [AdminController::class, 'venue'],
+    'POST admin-venue-save' => [AdminController::class, 'saveVenue'],
+    'GET admin-equipment' => [AdminController::class, 'equipment'],
+    'POST admin-equipment-add' => [AdminController::class, 'addEquipment'],
+    'POST admin-equipment-save' => [AdminController::class, 'saveEquipment'],
+    'POST admin-equipment-status' => [AdminController::class, 'equipmentStatus'],
+    'GET admin-prices' => [AdminController::class, 'prices'],
+    'POST admin-prices-save' => [AdminController::class, 'savePrices'],
     'GET venues' => [VenueController::class, 'index'],
     'GET venue' => [VenueController::class, 'show'],
     'POST booking-review' => [BookingController::class, 'review'],

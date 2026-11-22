@@ -5,7 +5,7 @@ class AuthController
     public static function showLogin(): void
     {
         self::redirectIfLoggedIn();
-        view('auth/login', ['title' => 'Log in – Eventra', 'email' => '', 'error' => null]);
+        view('auth/login', ['title' => 'Log in - Eventra', 'email' => '', 'error' => null]);
     }
 
     public static function login(): void
@@ -16,13 +16,13 @@ class AuthController
         $user = User::findByEmail($email);
 
         if ($user === null || !password_verify($password, $user['PasswordHash'])) {
-            view('auth/login', ['title' => 'Log in – Eventra', 'email' => $email, 'error' => 'Incorrect email or password.']);
+            view('auth/login', ['title' => 'Log in - Eventra', 'email' => $email, 'error' => 'Incorrect email or password.']);
             return;
         }
 
         if (!$user['IsActive']) {
             view('auth/login', [
-                'title' => 'Log in – Eventra',
+                'title' => 'Log in - Eventra',
                 'email' => $email,
                 'error' => 'This account has been deactivated. Please contact the administrator.',
             ]);
@@ -90,7 +90,7 @@ class AuthController
 
         if ($error !== null) {
             view('auth/register', [
-                'title' => 'Create an account – Eventra',
+                'title' => 'Create an account - Eventra',
                 'firstName' => $firstName,
                 'lastName' => $lastName,
                 'email' => $email,

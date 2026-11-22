@@ -13,6 +13,7 @@
         <a class="navbar-brand" href="index.php">Eventra</a>
         <div class="d-flex align-items-center gap-3">
             <?php if ($navUser = currentUser()): ?>
+                <span><?= e($navUser['FirstName']) ?>, <?= e(roleName($navUser['Role'])) ?></span>
                 <?php if ($navUser['Role'] === 'Client'): ?>                                 
                     <a class="btn btn-eventra" href="index.php?page=venues">Venues</a>     
                     <a class="btn btn-eventra" href="index.php?page=client">My bookings</a>
@@ -20,11 +21,13 @@
                 <?php if ($navUser['Role'] === 'Server'): ?>
                     <a class="btn btn-eventra" href="index.php?page=server">My events</a>
                 <?php endif; ?>
+                <?php if ($navUser['Role'] === 'Admin'): ?>
+                    <a class="btn btn-eventra" href="index.php?page=admin">Overview</a>
+                <?php endif; ?>
                 <?php if ($navUser['Role'] === 'Manager'): ?>
                     <a class="btn btn-eventra" href="index.php?page=manager">Bookings</a>
                     <a class="btn btn-eventra" href="index.php?page=manage-venues">Venues</a>
                 <?php endif; ?>
-                <span><?= e($navUser['FirstName']) ?>, <?= e(roleName($navUser['Role'])) ?></span>
                 <form method="post" action="index.php?page=logout">
                     <?= csrfField() ?>
                     <button class="btn btn-eventra">Log out</button>

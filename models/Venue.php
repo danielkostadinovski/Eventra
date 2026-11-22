@@ -2,7 +2,7 @@
 
 class Venue {
     public static function allActive(): array {
-        $statement = db()->query (
+        $statement = db()->query(
             'SELECT v.VenueID, v.Name, v.HourlyRate, v.MaxCapacity,
                     (SELECT FilePath FROM VenuePhotos
                      WHERE VenueID = v.VenueID
@@ -161,5 +161,66 @@ class Venue {
         );
         $statement->execute([$blackoutId, $venueId, $today]);
         return $statement->rowCount() === 1;
+    }
+
+    // all venues for the administrator with the name of their venue manager and their number of photos
+    public static function all(): array {
+        $statement = db()->query(
+            'SELECT v.VenueID, v.Name, v.HourlyRate, v.MaxCapacity, v.IsActive,
+                    u.FirstName, u.LastName,
+                    (SELECT COUNT(*) FROM VenuePhotos WHERE VenueID = v.VenueID) AS PhotoCount
+             FROM Venues AS v
+             JOIN Users AS u ON u.UserID = v.ManagerID
+             ORDER BY v.Name'
+        );
+        return $statement->fetchAll();
+    }
+
+    // any venue (active or not (for the administrator))
+    public static function find(int $venueId): ?array {
+        $statement = db()->prepare(
+            'SELECT VenueID, ManagerID, Name, Description, HourlyRate, MaxCapacity, IsActive
+             FROM Venues
+             WHERE VenueID = ?'
+        );
+        $statement->execute([$venueId]);
+        return $statement->fetch() ?: null;
+    }
+
+    // a new venue starts inactive because it has no photos yet
+    public static function create(int $managerId, string $name, string $description, int $hourlyRate, int $maxCapacity): int {
+        $statement = db()->prepare(
+            'INSERT INTO Venues (ManagerID, Name, Description, HourlyRate, MaxCapacity, IsActive)
+             VALUES (?, ?, ?, ?, ?, 0)'
+        );
+        $statement->execute([$managerId, $name, $description, $hourlyRate, $maxCapacity]);
+        return (int) db()->lastInsertId();
+    }
+
+    public static function update(int $venueId, int $managerId, string $name, string $description, int $hourlyRate, int $maxCapacity, int $isActive): void {
+        $statement = db()->prepare(
+            'UPDATE Venues
+             SET ManagerID = ?, Name = ?, Description = ?, HourlyRate = ?, MaxCapacity = ?, IsActive = ?
+             WHERE VenueID = ?'
+        );
+        $statement->execute([$managerId, $name, $description, $hourlyRate, $maxCapacity, $isActive, $venueId]);
+    }
+
+    // true if another venue already has this name (the Name column ignores upper and lower case tho)
+    public static function nameTaken(string $name, int $venueId): bool {
+        $statement = db()->prepare('SELECT COUNT(*) FROM Venues WHERE Name = ? AND VenueID <> ?');
+        $statement->execute([$name, $venueId]);
+        return $statement->fetchColumn() > 0;
+    }
+
+    // the number of bookings that are still pending, approved, or confirmed
+    public static function openBookingCount(int $venueId): int {
+        $statement = db()->prepare(
+            "SELECT COUNT(*)
+             FROM Bookings
+             WHERE VenueID = ? AND Status IN ('Pending', 'Approved', 'Confirmed')"
+        );
+        $statement->execute([$venueId]);
+        return (int) $statement->fetchColumn();
     }
 }

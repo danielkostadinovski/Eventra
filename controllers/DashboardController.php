@@ -62,10 +62,4 @@ class DashboardController
             'past' => array_slice(array_reverse($sections['past']), 0, 20),
         ]);
     }
-
-    public static function admin(): void
-    {
-        $user = requireRole('Admin');
-        view('dashboard', ['title' => 'Administrator - Eventra', 'user' => $user]);
-    }
 }

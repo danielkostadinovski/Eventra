@@ -10,6 +10,16 @@ class Booking {
         return $statement->fetch();
     }
 
+    // new bookings copy these rates and existing bookings keep the rates they were made with
+    public static function saveRates(int $hourlyStaffRate, int $foodRatePerPerson): void {
+        $statement = db()->prepare(
+            'UPDATE PricingSettings
+             SET HourlyStaffRate = ?, FoodRatePerPerson = ?
+             WHERE SettingID = 1'
+        );
+        $statement->execute([$hourlyStaffRate, $foodRatePerPerson]);
+    }
+
     //payment is overdue if a confirmed or completed booking is still unpaid
     // more than 14 days after the event date
     public static function hasOverduePayment(int $clientId): bool {
