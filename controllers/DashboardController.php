@@ -20,6 +20,7 @@ class DashboardController
 
         view('bookings/index', [
             'title' => 'My bookings - Eventra',
+            'mainClass' => '',
             'user' => $user,
             'upcoming' => $upcoming,
             'past' => array_reverse($past),

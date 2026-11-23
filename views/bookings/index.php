@@ -1,6 +1,11 @@
+<section class="page-band">
+    <div class="container">
+        <h1 class="display-5 mb-2">Welcome, <?= e($user['FirstName']) ?></h1>
+        <p class="mb-0">Here are all your bookings. Open one to see its details, to pay, or to leave a review.</p>
+    </div>
+</section>
 
-<h1 class="mb-1">Welcome, <?= e($user['FirstName']) ?></h1>
-<p class="text-muted mb-5">Here are all your bookings. Open one to see its details, to pay, or to leave a review.</p>
+<div class="container py-5">
 
 <?php if (!$upcoming && !$past): ?>
     <p class="text-muted">You have no bookings yet.</p>
