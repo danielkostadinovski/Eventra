@@ -1,4 +1,3 @@
-
 <?php
 
 class StaffAssignment {
@@ -91,5 +90,21 @@ class StaffAssignment {
         );
         $statement->execute([$status, $assignmentId, $serverId]);
         return $statement->rowCount() === 1;
+    }
+
+    // the amount of events that a server still has to work 
+    // the assignments that aren't declined on upcoming confirmed bookings
+    public static function upcomingCount(int $serverId): int {
+        $statement = db()->prepare(
+            "SELECT COUNT(*)
+             FROM StaffAssignments AS sa
+             JOIN Bookings AS b ON b.BookingID = sa.BookingID
+             WHERE sa.ServerID = ?
+               AND sa.Status <> 'Declined'
+               AND b.Status = 'Confirmed'
+               AND b.EventDate >= date('now', 'localtime')"
+        );
+        $statement->execute([$serverId]);
+        return (int) $statement->fetchColumn();
     }
 }

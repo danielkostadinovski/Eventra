@@ -1,10 +1,14 @@
 <section class="page-band">
     <div class="container">
         <h1 class="display-5 mb-2">Welcome, <?= e($user['FirstName']) ?></h1>
-        <p class="mb-0">
-            These are the bookings for your venues: <?= e(implode(', ', array_column($venues, 'Name'))) ?>.
-            Open a booking to approve it, confirm it, assign servers, or record a payment.
-        </p>
+        <?php if ($venues): ?>
+            <p class="mb-0">
+                These are the bookings for your venues: <?= e(implode(', ', array_column($venues, 'Name'))) ?>.
+                Open a booking to approve it, confirm it, assign servers, or record a payment.
+            </p>
+        <?php else: ?>
+            <p class="mb-0">You don't run any venues yet.</p>
+        <?php endif; ?>
     </div>
 </section>
 

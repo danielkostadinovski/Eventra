@@ -224,7 +224,6 @@ main a {
     border-radius: 12px;
 }
 
-
 /* charcoal band under the navigation bar */
 
 .page-band {
@@ -243,4 +242,45 @@ main a {
     border: 0;
     border-radius: 0;
     text-align: center;
+}
+
+/* administrator reports */
+
+.report-bar {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #ececec;
+}
+
+.report-bar div {
+    height: 100%;
+    border-radius: 4px;
+    background-color: #2b2b2b;
+}
+
+.month-chart {
+    display: flex;
+    gap: 12px;
+    height: 240px;
+}
+
+.month {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.month-track {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 6px;
+}
+
+.month-bar {
+    width: 100%;
+    min-height: 2px;
+    border-radius: 4px 4px 0 0;
+    background-color: #2b2b2b;
 }

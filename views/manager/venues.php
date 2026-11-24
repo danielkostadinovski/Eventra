@@ -6,24 +6,28 @@
 </section>
 
 <div class="container py-5">
-    <table class="table align-middle">
-        <thead>
-            <tr>
-                <th class="fw-normal text-muted">Venue</th>
-                <th class="fw-normal text-muted">Hourly rate</th>
-                <th class="fw-normal text-muted">Capacity</th>
-                <th class="fw-normal text-muted">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($venues as $venue): ?>
+    <?php if (!$venues): ?>
+        <p class="text-muted">You do not run any venues yet.</p>
+    <?php else: ?>
+        <table class="table align-middle">
+            <thead>
                 <tr>
-                    <td><a href="index.php?page=manage-venue&id=<?= $venue['VenueID'] ?>"><?= e($venue['Name']) ?></a></td>
-                    <td><?= money($venue['HourlyRate']) ?></td>
-                    <td><?= plural($venue['MaxCapacity'], 'guest') ?></td>
-                    <td><?= $venue['IsActive'] ? 'Active' : 'Inactive' ?></td>
+                    <th class="fw-normal text-muted">Venue</th>
+                    <th class="fw-normal text-muted">Hourly rate</th>
+                    <th class="fw-normal text-muted">Capacity</th>
+                    <th class="fw-normal text-muted">Status</th>
                 </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                <?php foreach ($venues as $venue): ?>
+                    <tr>
+                        <td><a href="index.php?page=manage-venue&id=<?= $venue['VenueID'] ?>"><?= e($venue['Name']) ?></a></td>
+                        <td><?= money($venue['HourlyRate']) ?></td>
+                        <td><?= plural($venue['MaxCapacity'], 'guest') ?></td>
+                        <td><?= $venue['IsActive'] ? 'Active' : 'Inactive' ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
 </div>

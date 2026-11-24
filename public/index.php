@@ -11,7 +11,8 @@ require __DIR__ . '/../models/User.php';
 require __DIR__ . '/../models/Venue.php';
 require __DIR__ . '/../models/Equipment.php';
 require __DIR__ . '/../models/Booking.php';        
-require __DIR__ . '/../models/StaffAssignment.php';                      
+require __DIR__ . '/../models/StaffAssignment.php';
+require __DIR__ . '/../models/Report.php';                      
 require __DIR__ . '/../controllers/HomeController.php';
 require __DIR__ . '/../controllers/AuthController.php';
 require __DIR__ . '/../controllers/DashboardController.php';
@@ -53,6 +54,13 @@ $routes = [
     'POST admin-equipment-status' => [AdminController::class, 'equipmentStatus'],
     'GET admin-prices' => [AdminController::class, 'prices'],
     'POST admin-prices-save' => [AdminController::class, 'savePrices'],
+    'GET admin-users' => [AdminController::class, 'users'],
+    'GET admin-user' => [AdminController::class, 'user'],
+    'POST admin-user-save' => [AdminController::class, 'saveUser'],
+    'POST admin-user-status' => [AdminController::class, 'userStatus'],
+    'GET admin-bookings' => [AdminController::class, 'bookings'],
+    'POST admin-booking-cancel' => [AdminController::class, 'cancelBooking'],
+    'GET admin-reports' => [AdminController::class, 'reports'],
     'GET venues' => [VenueController::class, 'index'],
     'GET venue' => [VenueController::class, 'show'],
     'POST booking-review' => [BookingController::class, 'review'],

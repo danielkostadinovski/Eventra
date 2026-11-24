@@ -4,6 +4,23 @@ class AdminController {
     // the largest capacity a venue can have (the same limit as on the venue manager's page)
     const MAX_CAPACITY = 500;
 
+    // the periods of the reports page (as value => label)
+    const PERIODS = [
+        'all' => 'All time',
+        'year' => 'Last 12 months',
+        'half-year' => 'Last 6 months',
+        'month' => 'Last 30 days',
+    ];
+
+    // the roles the administrator can filter the users by (as Role => label)
+    const ROLE_FILTERS = [
+        '' => 'All',
+        'Client' => 'Clients',
+        'Manager' => 'Venue managers',
+        'Server' => 'Servers',
+        'Admin' => 'Administrators',
+    ];
+
     // the administrator's overview page with a box for each part of the company
     public static function dashboard(): void {
         $user = requireRole('Admin');
@@ -21,6 +38,10 @@ class AdminController {
             'offeredItems' => $offeredItems,
             'retiredItems' => count($items) - $offeredItems,
             'rates' => Booking::currentRates(),
+            'clients' => count(User::all('Client')),
+            'staff' => count(User::all('')) - count(User::all('Client')),
+            'confirmedBookings' => count(Booking::confirmedUpcoming()),
+            'yearRevenue' => Report::summary(...self::periodDates('year'))['Revenue'],
         ]);
     }
 
@@ -211,6 +232,167 @@ class AdminController {
         self::prices($form, $error);
     }
 
+    // all accounts, optionally only one role 
+    public static function users(): void {
+        requireRole('Admin');
+        $role = $_GET['role'] ?? '';
+
+        if (!isset(self::ROLE_FILTERS[$role])) {
+            $role = '';
+        }
+
+        view('admin/users', [
+            'title' => 'Users - Eventra',
+            'mainClass' => '',
+            'users' => User::all($role),
+            'role' => $role,
+        ]);
+    }
+
+    // the form for a new venue manager or server account 
+    public static function user(array $form = [], ?string $error = null): void {
+        requireRole('Admin');
+
+        view('admin/user', [
+            'title' => 'New staff account - Eventra',
+            'venues' => Venue::all(),
+            'form' => $form,
+            'error' => $error,
+        ]);
+    }
+
+    public static function saveUser(): void {
+        requireRole('Admin');
+        $form = [
+            'first_name' => trim($_POST['first_name'] ?? ''),
+            'last_name' => trim($_POST['last_name'] ?? ''),
+            'email' => trim($_POST['email'] ?? ''),
+            'role' => ($_POST['role'] ?? '') === 'Server' ? 'Server' : 'Manager',
+            'venue_id' => (int) ($_POST['venue_id'] ?? 0),
+        ];
+        $error = self::accountError($form, $_POST['password'] ?? '', $_POST['password_confirm'] ?? '');
+
+        if ($error === null) {
+            // the account and the venue change are saved together or not at all
+            $db = db();
+            $db->exec('BEGIN IMMEDIATE');
+
+            try {
+                $userId = User::create($form['first_name'], $form['last_name'], $form['email'], $_POST['password'], $form['role']);
+
+                if ($form['role'] === 'Manager' && $form['venue_id'] !== 0) {
+                    Venue::setManager($form['venue_id'], $userId);
+                }
+                $db->exec('COMMIT');
+                setFlash('The account has been created. Give ' . $form['first_name'] . ' the email address and the password so they can log in.');
+                redirect('admin-users&role=' . $form['role']);
+            } catch (PDOException $e) {
+                $db->exec('ROLLBACK');
+                $error = 'The account could not be created. Please try again.';
+            }
+        }
+
+        self::user($form, $error);
+    }
+
+    // deactivate an account (the person can't log in anymore) or activate it again 
+    public static function userStatus(): void {
+        requireRole('Admin');
+        $person = User::findById((int) ($_POST['user_id'] ?? 0));
+        $back = 'admin-users&role=' . urlencode($_POST['role_filter'] ?? '');
+
+        if ($person === null) {
+            self::notFound('User not found');
+            return;
+        }
+
+        $name = $person['FirstName'] . ' ' . $person['LastName'];
+
+        if (($_POST['action'] ?? '') === 'activate') {
+            User::setActive($person['UserID'], 1);
+            setFlash($name . '\'s account is active again.');
+            redirect($back);
+        }
+
+        $error = self::deactivationError($person);
+
+        if ($error === null) {
+            try {
+                User::setActive($person['UserID'], 0);
+                setFlash($name . '\'s account has been deactivated. They cannot log in anymore.');
+                redirect($back);
+            } catch (PDOException $e) {
+                $error = 'The account could not be deactivated because something changed in the meantime. Please try again.';
+            }
+        }
+
+        setFlash($error, 'danger');
+        redirect($back);
+    }
+
+    // upcoming confirmed bookings that only the administrator can cancel 
+    public static function bookings(): void {
+        requireRole('Admin');
+
+        view('admin/bookings', [
+            'title' => 'Confirmed bookings - Eventra',
+            'mainClass' => '',
+            'bookings' => Booking::confirmedUpcoming(),
+        ]);
+    }
+
+    // the emergency cancellation (the booking becomes cancelled and if it was paid its payment becomes refunded)
+    public static function cancelBooking(): void {
+        requireRole('Admin');
+        $bookingId = (int) ($_POST['booking_id'] ?? 0);
+
+        // both changes are saved together or not at all
+        $db = db();
+        $db->exec('BEGIN IMMEDIATE');
+
+        try {
+            if (!Booking::changeStatus($bookingId, 'Confirmed', 'Cancelled')) {
+                $db->exec('ROLLBACK');
+                setFlash('This booking is no longer Confirmed, so it was not cancelled.', 'danger');
+                redirect('admin-bookings');
+            }
+            $refunded = Booking::refund($bookingId);
+            $db->exec('COMMIT');
+        } catch (PDOException $e) {
+            $db->exec('ROLLBACK');
+            setFlash('The booking could not be cancelled. Please try again.', 'danger');
+            redirect('admin-bookings');
+        }
+
+        if ($refunded) {
+            setFlash('The booking has been cancelled and its payment is marked as Refunded. Return the money to the client outside of Eventra.');
+        } else {
+            setFlash('The booking has been cancelled. It was not paid yet so there is nothing to refund.');
+        }
+        redirect('admin-bookings');
+    }
+
+    // company reports for a chosen period
+    public static function reports(): void {
+        requireRole('Admin');
+        $period = $_GET['period'] ?? 'year';
+
+        if (!isset(self::PERIODS[$period])) {
+            $period = 'year';
+        }
+        [$from, $to] = self::periodDates($period);
+
+        view('admin/reports', [
+            'title' => 'Reports - Eventra',
+            'mainClass' => '',
+            'period' => $period,
+            'summary' => Report::summary($from, $to),
+            'statuses' => Report::bookingsByStatus($from, $to),
+            'venues' => Report::venues($from, $to),
+            'overdue' => Report::overduePayments(),
+        ]);
+    }
+
     // checks the venue form and returns the first problem or null if everything is fine
     private static function venueError(array $form, ?array $venue): ?string {
         $manager = User::managers()[$form['manager_id']] ?? null;
@@ -270,6 +452,71 @@ class AdminController {
             return 'The price must be an amount in euro between 0.01 and 10000 (for example 25 or 10.50)';
         }
         return null;
+    }
+
+    // checks the new account form with the same rules as the public registration
+    private static function accountError(array $form, string $password, string $passwordConfirm): ?string {
+        if ($form['first_name'] === '' || $form['last_name'] === '' || $form['email'] === '' || $password === '') {
+            return 'Please fill in all fields.';
+        }
+        if (mb_strlen($form['first_name']) > 50 || mb_strlen($form['last_name']) > 50) {
+            return 'First and last name can be at most 50 characters long.';
+        }
+        if (strlen($form['email']) > 255 || !filter_var($form['email'], FILTER_VALIDATE_EMAIL)) {
+            return 'Please enter a valid email address.';
+        }
+        if (strlen($password) < 8) {
+            return 'The password must be at least 8 characters long.';
+        }
+        if ($password !== $passwordConfirm) {
+            return 'The passwords do not match.';
+        }
+        if (User::findByEmail($form['email']) !== null) {
+            return 'An account with this email already exists.';
+        }
+        if ($form['venue_id'] !== 0 && $form['role'] === 'Server') {
+            return 'A server does not run a venue. Please choose "No venue for now" or make the account a venue manager.';
+        }
+        if ($form['venue_id'] !== 0 && Venue::find($form['venue_id']) === null) {
+            return 'Please choose a venue from the list.';
+        }
+        return null;
+    }
+
+    // an account can't be deactivated while people still depend on it
+    private static function deactivationError(array $person): ?string {
+        $name = $person['FirstName'] . ' ' . $person['LastName'];
+
+        if ($person['Role'] === 'Admin') {
+            return 'Administrator accounts cannot be deactivated.';
+        }
+        if ($person['Role'] === 'Manager') {
+            $venues = Venue::activeCountForManager($person['UserID']);
+
+            if ($venues > 0) {
+                return $name . ' still runs ' . plural($venues, 'active venue') . '. Give them to another venue manager first.';
+            }
+        }
+        if ($person['Role'] === 'Server') {
+            $events = StaffAssignment::upcomingCount($person['UserID']);
+
+            if ($events > 0) {
+                return $name . ' still has ' . plural($events, 'upcoming event') . '. The account can be deactivated once none are left.';
+            }
+        }
+        return null;
+    }
+
+    // the first and the last event date of a reports period as 'YYYY-MM-DD', 'YYYY-MM-DD'
+    private static function periodDates(string $period): array {
+        $today = date('Y-m-d');
+
+        return match ($period) {
+            'month' => [date('Y-m-d', strtotime('-30 days')), $today],
+            'half-year' => [date('Y-m-d', strtotime('-6 months')), $today],
+            'year' => [date('Y-m-d', strtotime('-12 months')), $today],
+            default => ['0000-01-01', '9999-12-31'],
+        };
     }
 
     // turns an amount in euro from a form (like 92.50 or something) into cents 9250 or gives null if it's not an amount between 0.01 and $maxEuro

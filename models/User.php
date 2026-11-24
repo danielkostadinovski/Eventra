@@ -40,4 +40,26 @@ class User
         return array_column($statement->fetchAll(), null, 'UserID');
     }
 
+    // all accounts for the administrator (staff first)
+    //  $role = '' shows every role
+    public static function all(string $role): array
+    {
+        $statement = db()->prepare(
+            "SELECT UserID, FirstName, LastName, Email, Role, IsActive
+             FROM Users
+             WHERE ? = '' OR Role = ?
+             ORDER BY CASE Role WHEN 'Admin' THEN 1 WHEN 'Manager' THEN 2 WHEN 'Server' THEN 3 ELSE 4 END,
+                      FirstName, LastName"
+        );
+        $statement->execute([$role, $role]);
+        return $statement->fetchAll();
+    }
+
+    // 0 = deactivated (the person is logged out and can't log in anymore)
+    // 1 = active
+    public static function setActive(int $userId, int $isActive): void
+    {
+        $statement = db()->prepare('UPDATE Users SET IsActive = ? WHERE UserID = ?');
+        $statement->execute([$isActive, $userId]);
+    }
 }

@@ -223,4 +223,17 @@ class Venue {
         $statement->execute([$venueId]);
         return (int) $statement->fetchColumn();
     }
+
+    // gives a venue to another venue manager (it's used when the administrator makes a manager account)
+    public static function setManager(int $venueId, int $managerId): void {
+        $statement = db()->prepare('UPDATE Venues SET ManagerID = ? WHERE VenueID = ?');
+        $statement->execute([$managerId, $venueId]);
+    }
+
+    // the number of active venues that a venue manager runs
+    public static function activeCountForManager(int $managerId): int {
+        $statement = db()->prepare('SELECT COUNT(*) FROM Venues WHERE ManagerID = ? AND IsActive = 1');
+        $statement->execute([$managerId]);
+        return (int) $statement->fetchColumn();
+    }
 }

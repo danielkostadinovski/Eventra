@@ -236,4 +236,27 @@ class Booking {
         $statement = db()->prepare('UPDATE Bookings SET ConsultationNotes = ?, AttachmentPath = ? WHERE BookingID = ?');
         $statement->execute([$notes, $attachmentPath, $bookingId]);
     }
+
+    // upcoming confirmed bookings of every venue for the administrator's emergency cancellation
+    public static function confirmedUpcoming(): array {
+        $statement = db()->query(
+            "SELECT b.BookingID, b.EventDate, b.StartTime, b.GuestCount, v.Name AS VenueName,
+                    u.FirstName, u.LastName, pr.TotalPrice, p.Status AS PaymentStatus
+             FROM Bookings AS b
+             JOIN Venues AS v ON v.VenueID = b.VenueID
+             JOIN Users AS u ON u.UserID = b.ClientID
+             JOIN BookingPrices AS pr ON pr.BookingID = b.BookingID
+             LEFT JOIN Payments AS p ON p.BookingID = b.BookingID
+             WHERE b.Status = 'Confirmed' AND b.EventDate >= date('now', 'localtime')
+             ORDER BY b.EventDate, b.StartTime"
+        );
+        return $statement->fetchAll();
+    }
+
+    // a paid payment of a cancelled booking becomes refunded (the money is not returned on the platform tho, it's done manually)
+    public static function refund(int $bookingId): bool {
+        $statement = db()->prepare("UPDATE Payments SET Status = 'Refunded' WHERE BookingID = ? AND Status = 'Paid'");
+        $statement->execute([$bookingId]);
+        return $statement->rowCount() === 1;
+    }
 }
