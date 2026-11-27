@@ -1,4 +1,3 @@
-
 <section class="venues-hero">
     <video autoplay muted loop playsinline>
         <source src="videos/venues.mp4" type="video/mp4">

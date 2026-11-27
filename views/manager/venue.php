@@ -1,4 +1,3 @@
-
 <?php
 // after an error the form shows what the manager typed (otherwise the saved values)
 $description = $form['description'] ?? $venue['Description'];

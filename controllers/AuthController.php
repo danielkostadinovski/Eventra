@@ -46,7 +46,7 @@ class AuthController
     {
         self::redirectIfLoggedIn();
         view('auth/register', [
-            'title' => 'Create an account – Eventra',
+            'title' => 'Create an account - Eventra',
             'firstName' => '',
             'lastName' => '',
             'email' => '',

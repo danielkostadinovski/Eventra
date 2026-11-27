@@ -43,6 +43,4 @@
     <?php if ($flash = takeFlash()): ?>
         <div class="alert alert-<?= $flash['type'] ?> <?= ($mainClass ?? null) === '' ? 'flash-bar' : '' ?>"><?= e($flash['message']) ?></div>
     <?php endif; ?>
-
-
     

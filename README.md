@@ -44,4 +44,3 @@ All demo accounts use the password `Eventra2026!`
 | Venue Manager | georgi.petrov@eventra.bg |
 | Server | nikolay.ivanov@eventra.bg |
 | Client | ivana.georgieva@abv.bg |
-

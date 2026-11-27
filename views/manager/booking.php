@@ -1,4 +1,3 @@
-
 <?php $dueDate = date('Y-m-d', strtotime($booking['EventDate'] . ' +14 days')); ?>
 
 <a href="index.php?page=manager" class="text-muted text-decoration-none small">&larr; Bookings</a>

@@ -1,4 +1,3 @@
-
 <table class="table align-middle mb-5">
     <thead>
         <tr>

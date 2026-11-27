@@ -1,4 +1,3 @@
-
 <?= csrfField() ?>
 <input type="hidden" name="venue_id" value="<?= e($form['venue_id']) ?>">
 <input type="hidden" name="event_date" value="<?= e($form['event_date']) ?>">

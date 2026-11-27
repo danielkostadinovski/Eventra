@@ -1,4 +1,3 @@
-
 <h1 class="mb-1">Review your booking</h1>
 <p class="text-muted mb-4"><?= e($venue['Name']) ?>, Sofia</p>
 

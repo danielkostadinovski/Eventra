@@ -1,4 +1,3 @@
-
 <?php $galleryPhotos = array_slice($photos, 0, 3); ?>
 
 <a href="index.php?page=venues" class="text-muted text-decoration-none small">&larr; All venues</a>

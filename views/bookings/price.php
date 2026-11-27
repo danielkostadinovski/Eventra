@@ -1,4 +1,3 @@
-
 <?php foreach ($price['lines'] as $line): ?>
     <div class="d-flex justify-content-between gap-3 mb-2">
         <span><?= e($line['label']) ?></span>
